@@ -180,22 +180,23 @@ Use three sentence maximum and keep the answer concise.`); // Initial multiline 
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
-      <div className="w-full md:w-1/2 p-4 md:p-8 flex flex-col">
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg flex-1 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row p-4 md:p-8 gap-4 md:gap-8">
+      {/* Query Section */}
+      <div className="w-full md:w-1/2 flex flex-col gap-4">
+        <div className="bg-white p-6 rounded-lg shadow-lg flex-1 flex flex-col">
           <div className="text-center mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-              File search with RAG
+            <h1 className="text-3xl font-bold text-gray-800">
+              File Search with RAG
             </h1>
             <p className="text-gray-600 mt-2">
               Ask me something about the private files you upload
             </p>
           </div>
 
-          {/* Adjust the scrollable area for conversation history */}
+          {/* Conversation History */}
           <div
             className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg"
-            style={{ maxHeight: "calc(100vh - 350px)" }} // Adjust max height to make only the conversation area scrollable
+            style={{ maxHeight: "calc(100vh - 400px)" }}
           >
             <div className="space-y-4">
               {conversation.map((entry, index) => (
@@ -231,49 +232,41 @@ Use three sentence maximum and keep the answer concise.`); // Initial multiline 
           </div>
         </div>
 
+        {/* Query Form */}
         <form
           onSubmit={handleSubmit}
-          className="sticky bottom-0 bg-white p-4 md:p-6 rounded-lg shadow-lg mt-4"
+          className="bg-white p-6 rounded-lg shadow-lg"
         >
-          <div className="flex justify-justify mt-4">
+          <div className="space-y-4">
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Enter your search query..."
-              className="w-4/5 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loadingQuery}
             />
-          </div>
-          <div className="flex justify-justify mt-4">
             <textarea
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
-              className="w-4/5 p-3 h-32 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter system prompt..."
+              className="w-full p-3 h-32 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loadingQuery}
               style={{ whiteSpace: "pre-wrap" }}
             />
-          </div>
-
-          {/* Add Customer ID Input Field Below the History Section */}
-          <div className="flex justify-left mt-4">
             <input
               type="text"
               value={customerIdQuery}
               onChange={(e) => setCustomerIdQuery(e.target.value)}
               placeholder="Enter Customer ID for Query"
-              className="sm:w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loadingQuery}
             />
-          </div>
-
-          <div className="flex justify-center mt-4">
             <button
-              id="query-submit"
               type="submit"
-              className={`sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+              className={`w-full sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
                 loadingQuery || !customerIdQuery || !query || !systemPrompt
-                  ? "cursor-not-allowed"
+                  ? "cursor-not-allowed opacity-50"
                   : "hover:bg-blue-600"
               }`}
               disabled={
@@ -286,103 +279,104 @@ Use three sentence maximum and keep the answer concise.`); // Initial multiline 
         </form>
       </div>
 
-      <div className="w-full md:w-1/2 p-4 md:p-8">
-        <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Upload a File
-            </h2>
-            <form onSubmit={handleFileUpload} className="space-y-4">
-              <input
-                type="file"
-                onChange={(e) =>
-                  setSelectedFile(e.target.files ? e.target.files[0] : null)
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loadingFile}
-              />
-
-              {/* Customer ID Input for Upload */}
-              <input
-                type="text"
-                value={customerIdUpload}
-                onChange={(e) => setCustomerIdUpload(e.target.value)}
-                placeholder="Enter Customer ID for Upload"
-                className="sm:w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                disabled={loadingFile}
-              />
-
-              <div className="flex space-x-4">
-                <div className="w-full">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Chunk Size (bytes)
-                  </label>
-                  <input
-                    type="number"
-                    value={chunkSize}
-                    onChange={(e) => setChunkSize(Number(e.target.value))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="w-full">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Chunk Overlap (bytes)
-                  </label>
-                  <input
-                    type="number"
-                    value={chunkOverlap}
-                    onChange={(e) => setChunkOverlap(Number(e.target.value))}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+      {/* Upload and Delete Section */}
+      <div className="w-full md:w-1/2 flex flex-col gap-4">
+        {/* Upload Section */}
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Upload a File
+          </h2>
+          <form onSubmit={handleFileUpload} className="space-y-4">
+            <input
+              type="file"
+              onChange={(e) =>
+                setSelectedFile(e.target.files ? e.target.files[0] : null)
+              }
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingFile}
+            />
+            <input
+              type="text"
+              value={customerIdUpload}
+              onChange={(e) => setCustomerIdUpload(e.target.value)}
+              placeholder="Enter Customer ID for Upload"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingFile}
+            />
+            <div className="flex gap-4">
+              <div className="w-full">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Chunk Size (bytes)
+                </label>
+                <input
+                  type="number"
+                  value={chunkSize}
+                  onChange={(e) => setChunkSize(Number(e.target.value))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-              <button
-                type="submit"
-                className={`sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
-                  loadingFile || !selectedFile || !customerIdUpload
-                    ? "cursor-not-allowed"
-                    : "hover:bg-blue-600"
-                }`}
-                disabled={loadingFile || !selectedFile || !customerIdUpload}
-              >
-                {loadingFile ? "Uploading..." : "Upload"}
-              </button>
-
-              {uploadSuccessMessage && (
-                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
-                  {uploadSuccessMessage}
-                </div>
-              )}
-              {uploadError && (
-                <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
-                  {uploadError}
-                </div>
-              )}
-            </form>
-
-            <div className="mt-16">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Delete all Files
-              </h2>
-              <button
-                onClick={handleDeleteAll}
-                className="sm:w-1/3 bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition duration-300"
-                disabled={loadingDelete}
-              >
-                {loadingDelete ? "Deleting..." : "Delete All Files"}
-              </button>
-              {deleteSuccessMessage && (
-                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
-                  {deleteSuccessMessage}
-                </div>
-              )}
-              {deleteErrorMessage && (
-                <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
-                  {deleteErrorMessage}
-                </div>
-              )}
+              <div className="w-full">
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Chunk Overlap (bytes)
+                </label>
+                <input
+                  type="number"
+                  value={chunkOverlap}
+                  onChange={(e) => setChunkOverlap(Number(e.target.value))}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-          </div>
+            <button
+              type="submit"
+              className={`w-full sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+                loadingFile || !selectedFile || !customerIdUpload
+                  ? "cursor-not-allowed opacity-50"
+                  : "hover:bg-blue-600"
+              }`}
+              disabled={loadingFile || !selectedFile || !customerIdUpload}
+            >
+              {loadingFile ? "Uploading..." : "Upload"}
+            </button>
+            {uploadSuccessMessage && (
+              <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
+                {uploadSuccessMessage}
+              </div>
+            )}
+            {uploadError && (
+              <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
+                {uploadError}
+              </div>
+            )}
+          </form>
+        </div>
+
+        {/* Delete Section */}
+        <div className="bg-white p-6 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Delete All Files
+          </h2>
+          <button
+            onClick={handleDeleteAll}
+            className={`w-full sm:w-1/3 bg-red-500 text-white p-3 rounded-lg transition duration-300 ${
+              loadingDelete
+                ? "cursor-not-allowed opacity-50"
+                : "hover:bg-red-600"
+            }`}
+            disabled={loadingDelete}
+          >
+            {loadingDelete ? "Deleting..." : "Delete All Files"}
+          </button>
+          {deleteSuccessMessage && (
+            <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
+              {deleteSuccessMessage}
+            </div>
+          )}
+          {deleteErrorMessage && (
+            <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
+              {deleteErrorMessage}
+            </div>
+          )}
         </div>
       </div>
     </div>
