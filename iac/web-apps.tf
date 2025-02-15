@@ -1,30 +1,18 @@
 resource "azurerm_linux_web_app" "portalui" {
   name                = ""
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_service_plan.this.location
-  service_plan_id     = azurerm_service_plan.this.id
-
-  depends_on = [azurerm_app_service_certificate.this]
+  resource_group_name = data.azurerm_resource_group.this.name
+  location            = data.azurerm_service_plan.this.location
+  service_plan_id     = data.azurerm_service_plan.this.id
 
   app_settings = {
-    apiKeys__pinecone = var.pineconeApiKey
-    apiKeys__opneAi   = var.openAiApiKey
+    apiKeys__pinecone = data.azurerm_key_vault_secret.pineconeapikey.value
+    apiKeys__opneAi   = data.azurerm_key_vault_secret.openaiapikey.value
     pinecone__index   = "fs-live-index"
   }
 
   site_config {
     application_stack {
-      dotnet_version = "6.0"
+      dotnet_version = "8.0"
     }
   }
-}
-
-variable "pineconeApiKey" {
-  type      = string
-  sensitive = true
-}
-
-variable "openAiApiKey" {
-  type      = string
-  sensitive = true
 }

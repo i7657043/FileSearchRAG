@@ -10,14 +10,6 @@ parameters:
     displayName: Api Base Url
     default: "https://filesearch-rag-api-cqgba3exfuc3bdfk.uksouth-01.azurewebsites.net"
 
-  - name: pineconeApiKey
-    type: string
-    displayName: Pinecone Api Key
-
-  - name: openAiApiKey
-    type: string
-    displayName: OpenAi Api Key
-
 stages:
   - stage: deploy
     displayName: Build and Deploy
@@ -25,13 +17,9 @@ stages:
       - group: global-acr
       - name: imageName
         value: filesearchrag-web-ui
-      - name: pineconeApiKeySensitive
-        value: ${{ parameters.pineconeApiKey }}
-      - name: openAiApiKeySensitive
-        value: ${{ parameters.openAiApiKey }}
     jobs:
       - job: build
-        displayName: Build
+        displayName: Build Apps
         steps:
           - checkout: self
             
@@ -69,7 +57,7 @@ stages:
               deployment_method: zipDeploy
 
       - job: tf_job
-        displayName: TF
+        displayName: Run Terraform
         dependsOn: build
         steps:
           - checkout: self
@@ -80,7 +68,7 @@ stages:
               terraformVersion: 1.10.5
 
           - task: TerraformTaskV4@4
-            displayName: terraform init
+            displayName: Terraform init
             inputs:
               provider: 'azurerm'
               command: 'init'
@@ -99,16 +87,16 @@ stages:
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
           - task: TerraformTaskV4@4
-            displayName: terraform plan
+            displayName: Terraform plan
             inputs:
               provider: 'azurerm'
               command: 'plan'
-              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "imageTag=$(Build.BuildId)" -var "pineconeApiKey=${{ variables.pineconeApiKeySensitive }}" -var "openAiApiKey=${{ parameters.openAiApiKeySensitive }}"'
+              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "imageTag=$(Build.BuildId)"'
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
           - task: TerraformTaskV4@4
-            displayName: terraform apply
+            displayName: Terraform apply
             inputs:
               provider: 'azurerm'
               command: 'apply'
