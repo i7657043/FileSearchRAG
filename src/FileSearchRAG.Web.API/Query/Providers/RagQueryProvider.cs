@@ -29,7 +29,7 @@ namespace FileSearchRAG.Web.API.Query.Providers
             string answer = await _openAiClient.QueryAsync(query, responseContent.Context);
 
             string filesAnswer = responseContent.Sources.Count > 0
-                ? $"The answer came from the following file/s:\n{string.Join("\n", responseContent.Sources)}"
+                ? $"The answer came from: {string.Join(",", responseContent.Sources)}"
                 : "The answer came from knowledge outside of your private documents";
 
             return new QueryResponse(answer, filesAnswer);
