@@ -22,7 +22,7 @@ internal class Program
         string customerId = "001";
         Console.WriteLine("Getting pinecone client...");
         OpenAiWrapper openAiWrapper = new OpenAiWrapper(config.GetValue<string>("apiKeys:openAi")!);
-        PineconeClientWrapper pineconeClient = new PineconeClientWrapper(config.GetValue<string>("apiKeys:pinecone")!);
+        PineconeClientWrapper pineconeClient = new PineconeClientWrapper(config.GetValue<string>("apiKeys:pinecone")!, "search-index-2");
 
         string command = GetCommandFromUserInput();
         if (command == queryCommand)
@@ -38,7 +38,10 @@ internal class Program
                 VectorMatch responseContent = await pineconeClient.QueryAsync(
                     embeddingResponse.Data[0].Embedding.Select(e => (float)e).ToArray(),
                     customerId);
-                string answer = await openAiWrapper.QueryAsync(query, responseContent.Context);
+                string systemPrompt = "Use the given context to answer the question.\n" +
+                    "If you don't know the answer, say you don't know.\n" +
+                    "Use three sentence maximum and keep the answer concise.\n";
+                string answer = await openAiWrapper.QueryAsync(query, systemPrompt, responseContent.Context);
                 string fileAnswer = responseContent.Sources.Count > 0
                     ? $"The answer came from the following file/s:\n{String.Join("\n", responseContent.Sources)}"
                     : "The answer came from knowledge outside of your documents";

@@ -11,8 +11,11 @@ internal class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddSingleton<IOpenAiWrapper>(new OpenAiWrapper(builder.Configuration.GetValue<string>("apiKeys:openAi")!));
-        builder.Services.AddSingleton<IPineconeClientWrapper>(new PineconeClientWrapper(builder.Configuration.GetValue<string>("apiKeys:pinecone")!));
+        builder.Services.AddSingleton<IOpenAiWrapper>(
+            new OpenAiWrapper(builder.Configuration.GetValue<string>("apiKeys:openAi")!));
+        builder.Services.AddSingleton<IPineconeClientWrapper>(
+            new PineconeClientWrapper(builder.Configuration.GetValue<string>("apiKeys:pinecone")!, 
+            builder.Configuration.GetValue<string>("pinecone:index")!));
         builder.Services.AddSingleton<PdfDocumentUploadWrapper>();
         builder.Services.AddSingleton<IDocumentProvider, DocumentProvider>();
         builder.Services.AddSingleton<IRagQueryProvider, RagQueryProvider>();

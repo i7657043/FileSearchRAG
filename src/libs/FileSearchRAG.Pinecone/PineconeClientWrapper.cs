@@ -9,11 +9,11 @@ namespace FileSearchRAG.Pinecone
         private const string _pinconeNamespace = "cust";
         private readonly IndexClient _pineconeVectorStore;
 
-        public PineconeClientWrapper(string apiKey)
+        public PineconeClientWrapper(string apiKey, string indexName)
         {
             PineconeClient pinecone = new PineconeClient(apiKey);
 
-            _pineconeVectorStore = pinecone.Index("search-index-2");
+            _pineconeVectorStore = pinecone.Index(indexName);
 
             DescribeIndexStatsResponse indexStatsResponse = _pineconeVectorStore.DescribeIndexStatsAsync(new DescribeIndexStatsRequest()).Result;
 
