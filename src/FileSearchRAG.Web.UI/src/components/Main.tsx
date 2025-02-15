@@ -294,6 +294,7 @@ Use three sentence maximum and keep the answer concise.`); // Initial multiline 
               }
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loadingFile}
+              accept="application/pdf"
             />
             <input
               type="text"

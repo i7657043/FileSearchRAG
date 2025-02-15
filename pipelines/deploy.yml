@@ -10,6 +10,14 @@ parameters:
     displayName: Api Base Url
     default: "https://filesearch-rag-api-cqgba3exfuc3bdfk.uksouth-01.azurewebsites.net"
 
+  - name: pineconeApiKey
+    type: string
+    displayName: Pinecone Api Key
+
+  - name: openAiApiKey
+    type: string
+    displayName: OpenAi Api Key
+
 stages:
   - stage: deploy
     displayName: Build and Deploy
@@ -17,10 +25,13 @@ stages:
       - group: global-acr
       - name: imageName
         value: filesearchrag-web-ui
-
+      - name: pineconeApiKeySensitive
+        value: ${{ parameters.pineconeApiKey }}
+      - name: openAiApiKeySensitive
+        value: ${{ parameters.openAiApiKey }}
     jobs:
-      - job: docker_build
-        displayName: Docker build
+      - job: build
+        displayName: Build
         steps:
           - checkout: self
             
@@ -43,9 +54,23 @@ stages:
               repository: '${{ variables.imageName }}'
               tags: $(Build.BuildId)
 
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish web app'
+            inputs:
+              command: 'publish'
+              projects: src/FileSearchRAG.Web.API/FileSearchRAG.Web.API.csproj
+              arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
+          
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish build artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
+              artifactName: 'FileSearchRAGWebApi.zip' 
+              deployment_method: zipDeploy
+
       - job: tf_job
         displayName: TF
-        dependsOn: docker_build
+        dependsOn: build
         steps:
           - checkout: self
             
@@ -78,7 +103,7 @@ stages:
             inputs:
               provider: 'azurerm'
               command: 'plan'
-              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "imageTag=$(Build.BuildId)"'
+              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "imageTag=$(Build.BuildId)" -var "pineconeApiKey=${{ variables.pineconeApiKeySensitive }}" -var "openAiApiKey=${{ parameters.openAiApiKeySensitive }}"'
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
@@ -90,3 +115,23 @@ stages:
               commandOptions: 'main.tfplan'
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
+
+      - job: deploy_web_apps_job
+        displayName: Deploy Web Apps
+        dependsOn: tf_job
+        steps:
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download Artifact'
+            inputs:
+              artifact: 'FileSearchRAGWebApi.zip'
+              path: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
+
+          - task: AzureWebApp@1
+            displayName: 'Deploy Web app'
+            inputs:
+              azureSubscription: filesearch-rag-servicecon
+              appType: webAppLinux
+              appName: filesearch-rag-api
+              package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi/FileSearchRAGWebApi.zip'
+              deploymentMethod: zipDeploy
+            
