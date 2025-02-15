@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>FileSearchRAG.Web.API</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\libs\FileSearchRAG.DocumentIngestion\FileSearchRAG.DocumentIngestion.csproj" />
+    <ProjectReference Include="..\libs\FileSearchRAG.Pinecone\FileSearchRAG.Pinecone.csproj" />
+  </ItemGroup>
+
+</Project>

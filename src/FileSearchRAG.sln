@@ -5,16 +5,20 @@ VisualStudioVersion = 17.12.35728.132
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSearchRAG.ConsoleClient", "FileSearchRAG.ConsoleClient\FileSearchRAG.ConsoleClient.csproj", "{41E509E7-5622-4082-AEC0-BB13671056D2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSearchRAG.Pinecone", "FileSearchRAG.Pinecone\FileSearchRAG.Pinecone.csproj", "{0ABC4AF0-5FCF-45A8-B157-A8C18C192A9A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileSearchRAG.Pinecone", "libs\FileSearchRAG.Pinecone\FileSearchRAG.Pinecone.csproj", "{0ABC4AF0-5FCF-45A8-B157-A8C18C192A9A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSearchRAG.DocumentIngestion", "FileSearchRAG.DocumentIngestion\FileSearchRAG.DocumentIngestion.csproj", "{8B1B2098-4510-401D-A9FE-66BF6E9EBFC4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSearchRAG.DocumentIngestion", "libs\FileSearchRAG.DocumentIngestion\FileSearchRAG.DocumentIngestion.csproj", "{8B1B2098-4510-401D-A9FE-66BF6E9EBFC4}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{674E5D5F-C07C-452F-9DED-659BC6E07358}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSearchRAG.OpenAi", "FileSearchRAG.OpenAi\FileSearchRAG.OpenAi.csproj", "{D9A26E59-E17A-41BD-A827-B4BE37DA441D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSearchRAG.OpenAi", "libs\FileSearchRAG.OpenAi\FileSearchRAG.OpenAi.csproj", "{D9A26E59-E17A-41BD-A827-B4BE37DA441D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libs", "libs", "{AC7EFD0B-033D-44A5-8A19-5F2D112B90F6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileSearchRAG.Web.API", "FileSearchRAG.Web.API\FileSearchRAG.Web.API.csproj", "{BA8DF0E1-368E-4EEB-BD41-432D6FBB958A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,9 +42,18 @@ Global
 		{D9A26E59-E17A-41BD-A827-B4BE37DA441D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9A26E59-E17A-41BD-A827-B4BE37DA441D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9A26E59-E17A-41BD-A827-B4BE37DA441D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BA8DF0E1-368E-4EEB-BD41-432D6FBB958A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA8DF0E1-368E-4EEB-BD41-432D6FBB958A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA8DF0E1-368E-4EEB-BD41-432D6FBB958A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA8DF0E1-368E-4EEB-BD41-432D6FBB958A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0ABC4AF0-5FCF-45A8-B157-A8C18C192A9A} = {AC7EFD0B-033D-44A5-8A19-5F2D112B90F6}
+		{8B1B2098-4510-401D-A9FE-66BF6E9EBFC4} = {AC7EFD0B-033D-44A5-8A19-5F2D112B90F6}
+		{D9A26E59-E17A-41BD-A827-B4BE37DA441D} = {AC7EFD0B-033D-44A5-8A19-5F2D112B90F6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {20A4F30D-1818-47CC-BBFC-12C25955FC48}

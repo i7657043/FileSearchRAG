@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FileSearchRAG.DocumentIngestion\FileSearchRAG.DocumentIngestion.csproj" />
-    <ProjectReference Include="..\FileSearchRAG.Pinecone\FileSearchRAG.Pinecone.csproj" />
+    <ProjectReference Include="..\libs\FileSearchRAG.DocumentIngestion\FileSearchRAG.DocumentIngestion.csproj" />
+    <ProjectReference Include="..\libs\FileSearchRAG.Pinecone\FileSearchRAG.Pinecone.csproj" />
   </ItemGroup>
 
 </Project>

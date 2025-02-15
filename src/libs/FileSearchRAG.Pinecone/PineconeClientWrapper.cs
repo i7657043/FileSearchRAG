@@ -1,17 +1,10 @@
 ﻿using FileSearchRAG.OpenAi;
-using OpenAI.Embeddings;
 using Pinecone;
 using System.Text;
 
 namespace FileSearchRAG.Pinecone
 {
-    public class VectorMatch
-    {
-        public List<string> Sources { get; set; } = new List<string>();
-        public string Context { get; set; } = string.Empty;
-    }
-
-    public class PineconeClientWrapper
+    public class PineconeClientWrapper : IPineconeClientWrapper
     {
         private readonly IndexClient _pineconeVectorStore;
         public PineconeClientWrapper(string apiKey)
@@ -77,12 +70,5 @@ namespace FileSearchRAG.Pinecone
 
             await _pineconeVectorStore.UpsertAsync(new UpsertRequest() { Vectors = vectors });
         }
-    }
-
-    public class VectorWrapper
-    {
-        public string Id { get; set; } = string.Empty;
-        public List<float> Values { get; set; } = new List<float>();
-        public List<Metadata> Metadata { get; set; } = new List<Metadata>();
     }
 }

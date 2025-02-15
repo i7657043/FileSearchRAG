@@ -2,11 +2,10 @@
 using OpenAI.Chat;
 using OpenAI.Embeddings;
 using OpenAI.Models;
-using System.Collections.Generic;
 
 namespace FileSearchRAG.OpenAi
 {
-    public class OpenAiWrapper
+    public class OpenAiWrapper : IOpenAiWrapper
     {
         private readonly OpenAIClient _openApiClient;
 
@@ -52,12 +51,5 @@ namespace FileSearchRAG.OpenAi
 
             return inserts;
         }
-    }
-
-    public class Insert
-    {
-        public string Text { get; set; } = string.Empty;
-        public string FileName { get; set; } = string.Empty;
-        public float[] Values { get; set; } = new float[] { };
     }
 }
