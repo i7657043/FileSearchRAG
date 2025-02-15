@@ -17,7 +17,7 @@ resource "azurerm_container_app" "this" {
   template {
     container {
       name   = "azurermcontainer"
-      image  = "contdevreg.azurecr.io/filesearchrag-web-ui:${var.imageTag}"
+      image  = "contdevreg.azurecr.io/${var.image}"
       cpu    = 0.25
       memory = "0.5Gi"
       env {
@@ -46,12 +46,3 @@ resource "azurerm_container_app" "this" {
   }
 }
 
-variable "imageTag" {
-  type      = string
-  sensitive = true
-}
-
-variable "acrpassword" {
-  type      = string
-  sensitive = true
-}

@@ -9,30 +9,33 @@ stages:
     displayName: Build and Deploy
     variables:
       - group: global-acr
+      - group: filesearch-rag
       - name: imageName
-        value: filesearchrag-web-ui
+        value: 'filesearch-rag-ui-img'
+      - name: webApiAppName
+        value: 'filesearch-rag-api-$(Build.BuildId)'
     jobs:
       - job: build
-        displayName: Build Apps
+        displayName: Build and Publish
         steps:
           - checkout: self            
           - task: Docker@2
-            displayName: Build the Docker image
+            displayName: Build the UI Docker image
             inputs:
               command: 'build'
               containerRegistry: filesearch-rag-docker-servicecon
-              repository: '${{ variables.imageName }}'
+              repository: '$(imageName)'
               dockerfile: src/FileSearchRAG.Web.UI/Dockerfile
               buildContext: src/FileSearchRAG.Web.UI
               tags: $(Build.BuildId)
-              arguments: '--build-arg REACT_APP_API_BASE_URL=https://filesearch-rag-webapi.azurewebsites.net'
+              arguments: '--build-arg REACT_APP_API_BASE_URL=https://$(webApiAppName).azurewebsites.net'
 
           - task: Docker@2
             displayName: Push the Docker image to ACR
             inputs:
               command: 'push'
               containerRegistry: filesearch-rag-docker-servicecon
-              repository: '${{ variables.imageName }}'
+              repository: '$(imageName)'
               tags: $(Build.BuildId)
 
           - task: DotNetCoreCLI@2
@@ -49,22 +52,6 @@ stages:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
               artifactName: 'FileSearchRAGWebApi'
               deployment_method: zipDeploy
-
-          # - task: UseNode@1
-          #   displayName: Use Node.js
-          #   inputs:
-          #     version: '18.x'
-
-          # - script: |
-          #     yarn
-          #     yarn build
-          #   displayName: Build the UI App
-
-          # - task: PublishBuildArtifacts@1
-          #   displayName: 'Publish build artifact'
-          #   inputs:
-          #     PathtoPublish: '$(Build.SourcesDirectory)/build'
-          #     artifactName: 'FileSearchRAGWebUi'
           
       - job: tf_job
         displayName: Run Terraform
@@ -100,7 +87,7 @@ stages:
             inputs:
               provider: 'azurerm'
               command: 'plan'
-              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "imageTag=$(Build.BuildId)"'
+              commandOptions: '-out main.tfplan -detailed-exitcode -var "acrpassword=$(acr_password)" -var "image=$(imageName):$(Build.BuildId)" -var "webApiAppName=$(webApiAppName)" -var "pineconeApiKey=$(pineconeApiKey)" -var "openAiApiKey=$(openAiApiKey)"'
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
@@ -113,23 +100,8 @@ stages:
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
-          - task: TerraformTaskV4@4
-            displayName: Get Terraform Output
-            inputs:
-              provider: 'azurerm'
-              command: 'output'
-              commandOptions: '-json'
-              environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
-              workingDirectory: '$(Build.SourcesDirectory)/iac'
-            name: tfOutput
-
-          - script: |
-              echo "##vso[task.setvariable variable=webAppUrl;isOutput=true]$(terraform output -json | jq -r .web_app_url.value)"
-            name: setWebAppUrl
-            displayName: Set Web App URL Variable      
-
       - job: deploy_web_apps_job
-        displayName: Deploy Web Apps
+        displayName: Deploy Web Api
         dependsOn: tf_job
         steps:
           - task: DownloadPipelineArtifact@2
@@ -143,21 +115,7 @@ stages:
             inputs:
               azureSubscription: filesearch-rag-servicecon
               appType: webAppLinux
-              appName: filesearch-rag-webapi
+              appName: '$(webApiAppName)'
               package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi/*.zip'
               deploymentMethod: zipDeploy
-
-          # - task: DownloadPipelineArtifact@2
-          #   displayName: Download UI Artifact
-          #   inputs:
-          #     artifact: 'FileSearchRAGWebUi'
-          #     path: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebUi'
-
-          # - task: AzureWebApp@1
-          #   displayName: Deploy UI Web App
-          #   inputs:
-          #     azureSubscription: 'filesearch-rag-servicecon'
-          #     appType: 'webAppLinux'
-          #     appName: 'filesearch-rag-ui'
-          #     package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebUi'
             
