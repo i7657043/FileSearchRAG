@@ -21,9 +21,7 @@ namespace FileSearchRAG.Web.API.Query.Controllers
         [Route("")]
         public async Task<IActionResult> QueryAsync([FromBody] RagQueryRequest request)
         {
-            string customerId = "001";
-
-            RagQueryResponse response = await _queryProvider.QueryAsync(request.Query, customerId);
+            RagQueryResponse response = await _queryProvider.QueryAsync(request);
 
             return Ok(response);
         }

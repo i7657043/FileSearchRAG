@@ -17,16 +17,10 @@ namespace FileSearchRAG.OpenAi
         public async Task<EmbeddingsResponse> GetEmbeddings(List<string> chunks) =>
             await _openApiClient.EmbeddingsEndpoint.CreateEmbeddingAsync(new EmbeddingsRequest(chunks, model: Model.Embedding_Ada_002));
         
-        public async Task<string> QueryAsync(string query, string context)
+        public async Task<string> QueryAsync(string query, string systemPrompt, string context)
         {
-            string systemPrompt = "Use the given context to answer the question.\n" +
-                "If you don't know the answer, say you don't know.\n" +
-                "Use three sentence maximum and keep the answer concise.\n" +
-                "Context:\n" +
-                $"{context}";
-
             List<Message> messages = new List<Message>() {
-                new Message(Role.System, systemPrompt),
+                new Message(Role.System, systemPrompt += $"\nContext:\n{context}"),
                 new Message(Role.User, query)
             };
 

@@ -9,24 +9,30 @@ interface ConversationEntry {
 
 function Main() {
   const [query, setQuery] = useState<string>("");
+  const [systemPrompt, setSystemPrompt] =
+    useState<string>(`Use the given context to answer the question
+If you don't know the answer, say you don't know.
+Use three sentence maximum and keep the answer concise.`); // Initial multiline value
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
   const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
   const [loadingFile, setLoadingFile] = useState<boolean>(false);
-  const [loadingDelete, setLoadingDelete] = useState<boolean>(false); // New state for delete loading
+  const [loadingDelete, setLoadingDelete] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [chunkSize, setChunkSize] = useState<number>(150);
   const [chunkOverlap, setChunkOverlap] = useState<number>(15);
   const [uploadSuccessMessage, setUploadSuccessMessage] = useState<
     string | null
-  >(null); // Success message for upload
+  >(null);
   const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<
     string | null
-  >(null); // Success message for delete
+  >(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
     null
-  ); // Error message for delete
+  );
+  const [customerIdQuery, setCustomerIdQuery] = useState<string>(""); // Customer ID state for query
+  const [customerIdUpload, setCustomerIdUpload] = useState<string>(""); // Customer ID state for upload
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const url = process.env.REACT_APP_API_BASE_URL;
   console.log("URL: " + url);
@@ -51,7 +57,7 @@ function Main() {
         setDeleteErrorMessage(null);
       }, 4000);
 
-      return () => clearTimeout(timer); // Clear timeout if component unmounts or state changes
+      return () => clearTimeout(timer);
     }
   }, [
     uploadSuccessMessage,
@@ -69,7 +75,11 @@ function Main() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          query,
+          systemPrompt,
+          customerId: customerIdQuery,
+        }), // Use customerIdQuery
       });
 
       const data = await apiResponse.json();
@@ -89,7 +99,6 @@ function Main() {
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);
-      setQuery("");
     } catch (error) {
       console.error("Error fetching data:", error);
       setConversation((prevConversation) => [
@@ -114,7 +123,7 @@ function Main() {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile) return;
+    if (!selectedFile || !customerIdUpload) return; // Ensure customerIdUpload is provided
 
     setLoadingFile(true);
     setUploadError(null); // Reset the error before starting the upload
@@ -124,6 +133,7 @@ function Main() {
     formData.append("file", selectedFile);
     formData.append("chunkSize", chunkSize.toString()); // Add chunk size
     formData.append("chunkOverlap", chunkOverlap.toString()); // Add chunk overlap
+    formData.append("customerId", customerIdUpload); // Use customerIdUpload
 
     try {
       const response = await fetch(`${url}/document`, {
@@ -182,33 +192,41 @@ function Main() {
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg max-h-[calc(100vh-300px)]">
-            {conversation.map((entry, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  entry.type === "user" ? "justify-end" : "justify-start"
-                } mb-4`}
-              >
+          {/* Adjust the scrollable area for conversation history */}
+          <div
+            className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg"
+            style={{ maxHeight: "calc(100vh - 350px)" }} // Adjust max height to make only the conversation area scrollable
+          >
+            <div className="space-y-4">
+              {conversation.map((entry, index) => (
                 <div
-                  className={`max-w-2/3 p-3 rounded-lg ${
-                    entry.type === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
+                  key={index}
+                  className={`flex ${
+                    entry.type === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <p className="text-sm">{entry.answer}</p>
-                  <p className="text-sm pt-1">{entry.filesAnswer}</p>
-                  <p
-                    className={`text-xs mt-2 ${
-                      entry.type === "user" ? "text-gray-100" : "text-gray-700"
+                  <div
+                    className={`max-w-2/3 p-3 rounded-lg ${
+                      entry.type === "user"
+                        ? "bg-blue-500 text-white"
+                        : "bg-gray-200 text-gray-800"
                     }`}
                   >
-                    {entry.timestamp}
-                  </p>
+                    <p className="text-sm">{entry.answer}</p>
+                    <p className="text-sm pt-1">{entry.filesAnswer}</p>
+                    <p
+                      className={`text-xs mt-2 ${
+                        entry.type === "user"
+                          ? "text-gray-100"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {entry.timestamp}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
             <div ref={conversationEndRef} />
           </div>
         </div>
@@ -217,7 +235,7 @@ function Main() {
           onSubmit={handleSubmit}
           className="sticky bottom-0 bg-white p-4 md:p-6 rounded-lg shadow-lg mt-4"
         >
-          <div className="flex justify-center mt-4">
+          <div className="flex justify-justify mt-4">
             <input
               type="text"
               value={query}
@@ -227,12 +245,40 @@ function Main() {
               disabled={loadingQuery}
             />
           </div>
+          <div className="flex justify-justify mt-4">
+            <textarea
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              className="w-4/5 p-3 h-32 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingQuery}
+              style={{ whiteSpace: "pre-wrap" }}
+            />
+          </div>
+
+          {/* Add Customer ID Input Field Below the History Section */}
+          <div className="flex justify-left mt-4">
+            <input
+              type="text"
+              value={customerIdQuery}
+              onChange={(e) => setCustomerIdQuery(e.target.value)}
+              placeholder="Enter Customer ID for Query"
+              className="sm:w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingQuery}
+            />
+          </div>
+
           <div className="flex justify-center mt-4">
             <button
               id="query-submit"
               type="submit"
-              className="w-1/3 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
-              disabled={loadingQuery}
+              className={`sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+                loadingQuery || !customerIdQuery || !query || !systemPrompt
+                  ? "cursor-not-allowed"
+                  : "hover:bg-blue-600"
+              }`}
+              disabled={
+                loadingQuery || !customerIdQuery || !query || !systemPrompt
+              }
             >
               {loadingQuery ? "Loading..." : "Submit"}
             </button>
@@ -255,6 +301,17 @@ function Main() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={loadingFile}
               />
+
+              {/* Customer ID Input for Upload */}
+              <input
+                type="text"
+                value={customerIdUpload}
+                onChange={(e) => setCustomerIdUpload(e.target.value)}
+                placeholder="Enter Customer ID for Upload"
+                className="sm:w-1/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loadingFile}
+              />
+
               <div className="flex space-x-4">
                 <div className="w-full">
                   <label className="block text-sm font-semibold text-gray-700">
@@ -281,12 +338,12 @@ function Main() {
               </div>
               <button
                 type="submit"
-                className={`w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
-                  loadingFile || !selectedFile
+                className={`sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+                  loadingFile || !selectedFile || !customerIdUpload
                     ? "cursor-not-allowed"
                     : "hover:bg-blue-600"
                 }`}
-                disabled={loadingFile || !selectedFile} // Disable until a file is selected
+                disabled={loadingFile || !selectedFile || !customerIdUpload}
               >
                 {loadingFile ? "Uploading..." : "Upload"}
               </button>
@@ -309,8 +366,8 @@ function Main() {
               </h2>
               <button
                 onClick={handleDeleteAll}
-                className="w-1/3 bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition duration-300"
-                disabled={loadingDelete} // Disable the button when loadingDelete is true
+                className="sm:w-1/3 bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition duration-300"
+                disabled={loadingDelete}
               >
                 {loadingDelete ? "Deleting..." : "Delete All Files"}
               </button>

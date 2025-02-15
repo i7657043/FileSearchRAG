@@ -18,15 +18,15 @@ namespace FileSearchRAG.Web.API.Query.Providers
             _pineconeClient = pineconeClient;
         }
 
-        public async Task<RagQueryResponse> QueryAsync(string query, string customerId)
+        public async Task<RagQueryResponse> QueryAsync(RagQueryRequest request)
         {
-            EmbeddingsResponse embeddingResponse = await _openAiClient.GetEmbeddings(new List<string>() { query });
+            EmbeddingsResponse embeddingResponse = await _openAiClient.GetEmbeddings(new List<string>() { request.Query });
 
             VectorMatch responseContent = await _pineconeClient.QueryAsync(
                 embeddingResponse.Data[0].Embedding.Select(e => (float)e).ToArray(),
-                customerId);
+                request.CustomerId);
 
-            string answer = await _openAiClient.QueryAsync(query, responseContent.Context);
+            string answer = await _openAiClient.QueryAsync(request.Query, request.SystemPrompt, responseContent.Context);
 
             string filesAnswer = responseContent.Sources.Count > 0
                 ? $"The answer came from: {string.Join(",", responseContent.Sources)}"
