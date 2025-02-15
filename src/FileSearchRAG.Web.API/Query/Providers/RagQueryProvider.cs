@@ -18,7 +18,7 @@ namespace FileSearchRAG.Web.API.Query.Providers
             _pineconeClient = pineconeClient;
         }
 
-        public async Task<QueryResponse> QueryAsync(string query, string customerId)
+        public async Task<RagQueryResponse> QueryAsync(string query, string customerId)
         {
             EmbeddingsResponse embeddingResponse = await _openAiClient.GetEmbeddings(new List<string>() { query });
 
@@ -32,7 +32,7 @@ namespace FileSearchRAG.Web.API.Query.Providers
                 ? $"The answer came from: {string.Join(",", responseContent.Sources)}"
                 : "The answer came from knowledge outside of your private documents";
 
-            return new QueryResponse(answer, filesAnswer);
+            return new RagQueryResponse(answer, filesAnswer);
         }
     }
 }

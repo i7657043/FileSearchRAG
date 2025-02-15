@@ -1,8 +1,8 @@
 ﻿namespace FileSearchRAG.Web.API.Query.Models
 {
-    public class QueryResponse
+    public class RagQueryResponse
     {
-        public QueryResponse(string answer, string filesAnswer)
+        public RagQueryResponse(string answer, string filesAnswer)
         {
             Answer = answer;
             FilesAnswer = filesAnswer;

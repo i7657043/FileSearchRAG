@@ -4,6 +4,6 @@ namespace FileSearchRAG.Web.API.Query.Providers
 {
     public interface IRagQueryProvider
     {
-        Task<QueryResponse> QueryAsync(string query, string customerId);
+        Task<RagQueryResponse> QueryAsync(string query, string customerId);
     }
 }

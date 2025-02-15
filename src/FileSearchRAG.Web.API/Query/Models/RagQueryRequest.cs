@@ -1,6 +1,6 @@
 ﻿namespace FileSearchRAG.Web.API.Query.Models
 {
-    public class QueryRequest
+    public class RagQueryRequest
     {
         public string Query { get; set; } = string.Empty;
     }

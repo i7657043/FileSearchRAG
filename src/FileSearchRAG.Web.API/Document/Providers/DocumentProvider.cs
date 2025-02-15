@@ -23,6 +23,9 @@ namespace FileSearchRAG.Web.API.Document.Providers
             _pdfDocumentUploadWrapper = pdfDocumentUploadWrapper;
         }
 
+        public Task ClearAllAsync() =>
+            _pineconeClient.ClearAllAsync();
+
         public async Task IngestAsync(DocumentUpload fileInfo, string customerId)
         {
             List<string> chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileBytes);

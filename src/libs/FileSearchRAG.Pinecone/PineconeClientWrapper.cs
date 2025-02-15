@@ -6,7 +6,9 @@ namespace FileSearchRAG.Pinecone
 {
     public class PineconeClientWrapper : IPineconeClientWrapper
     {
+        private const string _pinconeNamespace = "cust";
         private readonly IndexClient _pineconeVectorStore;
+
         public PineconeClientWrapper(string apiKey)
         {
             PineconeClient pinecone = new PineconeClient(apiKey);
@@ -15,11 +17,20 @@ namespace FileSearchRAG.Pinecone
 
             DescribeIndexStatsResponse indexStatsResponse = _pineconeVectorStore.DescribeIndexStatsAsync(new DescribeIndexStatsRequest()).Result;
 
-            Console.WriteLine(indexStatsResponse.ToString());            
+            Console.WriteLine(indexStatsResponse.ToString());
+        }
+
+        public async Task ClearAllAsync()
+        {
+            await _pineconeVectorStore.DeleteAsync(new DeleteRequest()
+            {
+                Namespace = _pinconeNamespace,
+                DeleteAll = true              
+            });            
         }
 
         public async Task<VectorMatch> QueryAsync(float[] queryVectors, string customerId)
-        {           
+        {
             QueryResponse response = await _pineconeVectorStore.QueryAsync(new QueryRequest()
             {
                 TopK = 3,
@@ -28,7 +39,8 @@ namespace FileSearchRAG.Pinecone
                 Filter = new Metadata
                 {
                     ["customer_id"] = customerId
-                }
+                },
+                Namespace = _pinconeNamespace
             });
 
             VectorMatch vectorMatch = new VectorMatch();
@@ -68,7 +80,11 @@ namespace FileSearchRAG.Pinecone
                 });
             }
 
-            await _pineconeVectorStore.UpsertAsync(new UpsertRequest() { Vectors = vectors });
+            await _pineconeVectorStore.UpsertAsync(new UpsertRequest() 
+            { 
+                Vectors = vectors, 
+                Namespace = _pinconeNamespace 
+            });
         }
     }
 }

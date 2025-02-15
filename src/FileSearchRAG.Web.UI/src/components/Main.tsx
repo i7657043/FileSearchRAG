@@ -14,9 +14,11 @@ function Main() {
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
   const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
   const [loadingFile, setLoadingFile] = useState<boolean>(false);
-  const [uploadError, setUploadError] = useState<string | null>(null); // Error state
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [chunkSize, setChunkSize] = useState<number>(150);
+  const [chunkOverlap, setChunkOverlap] = useState<number>(15);
   const conversationEndRef = useRef<HTMLDivElement>(null);
-  const url = "http://localhost:62000";
+  const url = "https://localhost:62001";
 
   useEffect(() => {
     if (conversationEndRef.current) {
@@ -84,6 +86,8 @@ function Main() {
     setUploadError(null); // Reset the error before starting the upload
     const formData = new FormData();
     formData.append("file", selectedFile);
+    formData.append("chunkSize", chunkSize.toString()); // Add chunk size
+    formData.append("chunkOverlap", chunkOverlap.toString()); // Add chunk overlap
 
     try {
       const response = await fetch(`${url}/document`, {
@@ -103,6 +107,23 @@ function Main() {
       setUploadError("Failed to upload file. Please try again."); // Set error message
     } finally {
       setLoadingFile(false);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    try {
+      const response = await fetch(`${url}/document`, {
+        method: "DELETE",
+      });
+
+      if (response.status === 200) {
+        alert("All documents deleted successfully.");
+      } else {
+        throw new Error("Failed to delete documents");
+      }
+    } catch (error) {
+      console.error("Error deleting documents:", error);
+      alert("Failed to delete documents. Please try again.");
     }
   };
 
@@ -154,27 +175,33 @@ function Main() {
           onSubmit={handleSubmit}
           className="sticky bottom-0 bg-white p-4 md:p-6 rounded-lg shadow-lg mt-4"
         >
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your search query..."
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={loadingQuery}
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300 mt-4"
-            disabled={loadingQuery}
-          >
-            {loadingQuery ? "Loading..." : "Submit"}
-          </button>
+          <div className="flex justify-center mt-4">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Enter your search query..."
+              className="w-4/5 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={loadingQuery}
+            />
+          </div>
+          {/* Center the Submit button */}
+          <div className="flex justify-center mt-4">
+            <button
+              id="query-submit"
+              type="submit"
+              className="w-1/3 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
+              disabled={loadingQuery}
+            >
+              {loadingQuery ? "Loading..." : "Submit"}
+            </button>
+          </div>
         </form>
       </div>
 
       <div className="w-full md:w-1/2 p-4 md:p-8">
         <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          <div className="mb-8">
+          <div className="">
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
               Upload a File
             </h2>
@@ -187,15 +214,50 @@ function Main() {
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={loadingFile}
               />
+              <div className="flex space-x-4">
+                <div className="w-full">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Chunk Size (bytes)
+                  </label>
+                  <input
+                    type="number"
+                    value={chunkSize}
+                    onChange={(e) => setChunkSize(Number(e.target.value))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="w-full">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Chunk Overlap (bytes)
+                  </label>
+                  <input
+                    type="number"
+                    value={chunkOverlap}
+                    onChange={(e) => setChunkOverlap(Number(e.target.value))}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
               <button
                 type="submit"
-                className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
+                className="w-1/3 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
                 disabled={loadingFile}
               >
                 {loadingFile ? "Uploading..." : "Upload"}
               </button>
             </form>
-            {/* Display error message if upload fails */}
+            {/* Delete All Button Section */}
+            <div className="mt-16">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4 ">
+                Delete all Files
+              </h2>
+              <button
+                onClick={handleDeleteAll}
+                className="w-1/3 bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition duration-300"
+              >
+                Delete All
+              </button>
+            </div>
             {uploadError && (
               <div className="mt-4 text-red-500 font-semibold">
                 {uploadError}
@@ -204,11 +266,11 @@ function Main() {
           </div>
 
           {lastUploadedFile && (
-            <div className="mt-4">
+            <div className="mt-16">
               <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Last Uploaded File
               </h2>
-              <p className="p-3 border border-gray-300 rounded-lg bg-gray-50">
+              <p className="w-1/3 p-3 border border-gray-300 rounded-lg bg-gray-50">
                 {lastUploadedFile}
               </p>
             </div>

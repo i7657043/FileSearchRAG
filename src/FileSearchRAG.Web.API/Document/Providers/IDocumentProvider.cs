@@ -5,5 +5,6 @@ namespace FileSearchRAG.Web.API.Document.Providers
     public interface IDocumentProvider
     {
         Task IngestAsync(DocumentUpload fileInfo, string customerId);
+        Task ClearAllAsync();
     }
 }
