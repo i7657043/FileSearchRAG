@@ -14,17 +14,51 @@ function Main() {
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
   const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
   const [loadingFile, setLoadingFile] = useState<boolean>(false);
+  const [loadingDelete, setLoadingDelete] = useState<boolean>(false); // New state for delete loading
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [chunkSize, setChunkSize] = useState<number>(150);
   const [chunkOverlap, setChunkOverlap] = useState<number>(15);
+  const [uploadSuccessMessage, setUploadSuccessMessage] = useState<
+    string | null
+  >(null); // Success message for upload
+  const [deleteSuccessMessage, setDeleteSuccessMessage] = useState<
+    string | null
+  >(null); // Success message for delete
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
+    null
+  ); // Error message for delete
   const conversationEndRef = useRef<HTMLDivElement>(null);
-  const url = "https://localhost:62001";
+  const url = process.env.REACT_APP_API_BASE_URL;
+  console.log("URL: " + url);
 
   useEffect(() => {
     if (conversationEndRef.current) {
       conversationEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [conversation]);
+
+  useEffect(() => {
+    if (
+      uploadSuccessMessage ||
+      deleteSuccessMessage ||
+      uploadError ||
+      deleteErrorMessage
+    ) {
+      const timer = setTimeout(() => {
+        setUploadSuccessMessage(null);
+        setDeleteSuccessMessage(null);
+        setUploadError(null);
+        setDeleteErrorMessage(null);
+      }, 4000);
+
+      return () => clearTimeout(timer); // Clear timeout if component unmounts or state changes
+    }
+  }, [
+    uploadSuccessMessage,
+    deleteSuccessMessage,
+    uploadError,
+    deleteErrorMessage,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +118,8 @@ function Main() {
 
     setLoadingFile(true);
     setUploadError(null); // Reset the error before starting the upload
+    setUploadSuccessMessage(null); // Reset the success message before starting the upload
+
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("chunkSize", chunkSize.toString()); // Add chunk size
@@ -99,6 +135,9 @@ function Main() {
         setLastUploadedFile(selectedFile.name);
         setSelectedFile(null);
         setUploadError(null); // Clear any previous errors
+        setUploadSuccessMessage(
+          `File "${selectedFile.name}" uploaded successfully!`
+        ); // Set success message
       } else {
         throw new Error("Failed to upload file");
       }
@@ -111,19 +150,22 @@ function Main() {
   };
 
   const handleDeleteAll = async () => {
+    setLoadingDelete(true); // Set loading to true when starting the delete process
     try {
       const response = await fetch(`${url}/document`, {
         method: "DELETE",
       });
 
       if (response.status === 200) {
-        alert("All documents deleted successfully.");
+        setDeleteSuccessMessage("All documents deleted successfully."); // Set success message for delete
       } else {
         throw new Error("Failed to delete documents");
       }
     } catch (error) {
       console.error("Error deleting documents:", error);
-      alert("Failed to delete documents. Please try again.");
+      setDeleteErrorMessage("Failed to delete documents. Please try again."); // Set error message for delete
+    } finally {
+      setLoadingDelete(false); // Set loading to false when done
     }
   };
 
@@ -185,7 +227,6 @@ function Main() {
               disabled={loadingQuery}
             />
           </div>
-          {/* Center the Submit button */}
           <div className="flex justify-center mt-4">
             <button
               id="query-submit"
@@ -201,7 +242,7 @@ function Main() {
 
       <div className="w-full md:w-1/2 p-4 md:p-8">
         <div className="bg-white p-6 md:p-8 rounded-lg shadow-lg">
-          <div className="">
+          <div>
             <h2 className="text-2xl font-bold text-gray-800 mb-4">
               Upload a File
             </h2>
@@ -240,41 +281,51 @@ function Main() {
               </div>
               <button
                 type="submit"
-                className="w-1/3 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
-                disabled={loadingFile}
+                className={`w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+                  loadingFile || !selectedFile
+                    ? "cursor-not-allowed"
+                    : "hover:bg-blue-600"
+                }`}
+                disabled={loadingFile || !selectedFile} // Disable until a file is selected
               >
                 {loadingFile ? "Uploading..." : "Upload"}
               </button>
+
+              {uploadSuccessMessage && (
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
+                  {uploadSuccessMessage}
+                </div>
+              )}
+              {uploadError && (
+                <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
+                  {uploadError}
+                </div>
+              )}
             </form>
-            {/* Delete All Button Section */}
+
             <div className="mt-16">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4 ">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Delete all Files
               </h2>
               <button
                 onClick={handleDeleteAll}
                 className="w-1/3 bg-red-500 text-white p-3 rounded-lg hover:bg-red-600 transition duration-300"
+                disabled={loadingDelete} // Disable the button when loadingDelete is true
               >
-                Delete All
+                {loadingDelete ? "Deleting..." : "Delete All Files"}
               </button>
+              {deleteSuccessMessage && (
+                <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-lg">
+                  {deleteSuccessMessage}
+                </div>
+              )}
+              {deleteErrorMessage && (
+                <div className="mt-4 p-3 bg-red-100 text-red-800 rounded-lg">
+                  {deleteErrorMessage}
+                </div>
+              )}
             </div>
-            {uploadError && (
-              <div className="mt-4 text-red-500 font-semibold">
-                {uploadError}
-              </div>
-            )}
           </div>
-
-          {lastUploadedFile && (
-            <div className="mt-16">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                Last Uploaded File
-              </h2>
-              <p className="w-1/3 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                {lastUploadedFile}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
