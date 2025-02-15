@@ -9,6 +9,6 @@ data "azurerm_key_vault_secret" "pineconeapikey" {
 }
 
 data "azurerm_key_vault_secret" "openaiapikey" {
-  name         = "open-ai-api-key"
+  name         = "openai-api-key"
   key_vault_id = data.azurerm_key_vault.secrets.id
 }

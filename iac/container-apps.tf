@@ -1,18 +1,13 @@
-data "azurerm_resource_group" "this" {
-  name = "filesearch-rag-rg"
-  #location = "UK South"
-}
-
 resource "azurerm_container_app_environment" "this" {
   name                = "filesearch-rag-cont-env"
-  location            = data.azurerm_resource_group.this.location
-  resource_group_name = data.azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
 }
 
 resource "azurerm_container_app" "this" {
   name                         = "filesearch-rag-ui"
   container_app_environment_id = azurerm_container_app_environment.this.id
-  resource_group_name          = data.azurerm_resource_group.this.name
+  resource_group_name          = azurerm_resource_group.this.name
   revision_mode                = "Single"
 
   secret {

@@ -4,12 +4,6 @@ pool:
   name: Azure Pipelines
   vmImage: ubuntu-latest
 
-parameters:
-  - name: apiBaseUrl
-    type: string
-    displayName: Api Base Url
-    default: "https://filesearch-rag-api-cqgba3exfuc3bdfk.uksouth-01.azurewebsites.net"
-
 stages:
   - stage: deploy
     displayName: Build and Deploy
@@ -21,8 +15,7 @@ stages:
       - job: build
         displayName: Build Apps
         steps:
-          - checkout: self
-            
+          - checkout: self            
           - task: Docker@2
             displayName: Build the Docker image
             inputs:
@@ -32,7 +25,7 @@ stages:
               dockerfile: src/FileSearchRAG.Web.UI/Dockerfile
               buildContext: src/FileSearchRAG.Web.UI
               tags: $(Build.BuildId)
-              arguments: '--build-arg REACT_APP_API_BASE_URL=${{ parameters.apiBaseUrl }}'
+              arguments: '--build-arg REACT_APP_API_BASE_URL=https://filesearch-rag-webapi.azurewebsites.net'
 
           - task: Docker@2
             displayName: Push the Docker image to ACR
@@ -43,25 +36,41 @@ stages:
               tags: $(Build.BuildId)
 
           - task: DotNetCoreCLI@2
-            displayName: 'Publish web app'
+            displayName: 'Publish Api web app'
             inputs:
               command: 'publish'
               projects: src/FileSearchRAG.Web.API/FileSearchRAG.Web.API.csproj
               arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
+              publishWebProjects: false
           
           - task: PublishBuildArtifacts@1
             displayName: 'Publish build artifact'
             inputs:
               PathtoPublish: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
-              artifactName: 'FileSearchRAGWebApi.zip' 
+              artifactName: 'FileSearchRAGWebApi'
               deployment_method: zipDeploy
 
+          # - task: UseNode@1
+          #   displayName: Use Node.js
+          #   inputs:
+          #     version: '18.x'
+
+          # - script: |
+          #     yarn
+          #     yarn build
+          #   displayName: Build the UI App
+
+          # - task: PublishBuildArtifacts@1
+          #   displayName: 'Publish build artifact'
+          #   inputs:
+          #     PathtoPublish: '$(Build.SourcesDirectory)/build'
+          #     artifactName: 'FileSearchRAGWebUi'
+          
       - job: tf_job
         displayName: Run Terraform
         dependsOn: build
         steps:
-          - checkout: self
-            
+          - checkout: self            
           - task: TerraformInstaller@0
             displayName: Install Terraform
             inputs:
@@ -104,22 +113,51 @@ stages:
               environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
               workingDirectory: '$(Build.SourcesDirectory)/iac'
 
+          - task: TerraformTaskV4@4
+            displayName: Get Terraform Output
+            inputs:
+              provider: 'azurerm'
+              command: 'output'
+              commandOptions: '-json'
+              environmentServiceNameAzureRM: 'filesearch-rag-servicecon'
+              workingDirectory: '$(Build.SourcesDirectory)/iac'
+            name: tfOutput
+
+          - script: |
+              echo "##vso[task.setvariable variable=webAppUrl;isOutput=true]$(terraform output -json | jq -r .web_app_url.value)"
+            name: setWebAppUrl
+            displayName: Set Web App URL Variable      
+
       - job: deploy_web_apps_job
         displayName: Deploy Web Apps
         dependsOn: tf_job
         steps:
           - task: DownloadPipelineArtifact@2
-            displayName: 'Download Artifact'
+            displayName: 'Download Api Artifact'
             inputs:
-              artifact: 'FileSearchRAGWebApi.zip'
+              artifact: 'FileSearchRAGWebApi'
               path: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi'
 
           - task: AzureWebApp@1
-            displayName: 'Deploy Web app'
+            displayName: 'Deploy Api Web app'
             inputs:
               azureSubscription: filesearch-rag-servicecon
               appType: webAppLinux
-              appName: filesearch-rag-api
-              package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi/FileSearchRAGWebApi.zip'
+              appName: filesearch-rag-webapi
+              package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebApi/*.zip'
               deploymentMethod: zipDeploy
+
+          # - task: DownloadPipelineArtifact@2
+          #   displayName: Download UI Artifact
+          #   inputs:
+          #     artifact: 'FileSearchRAGWebUi'
+          #     path: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebUi'
+
+          # - task: AzureWebApp@1
+          #   displayName: Deploy UI Web App
+          #   inputs:
+          #     azureSubscription: 'filesearch-rag-servicecon'
+          #     appType: 'webAppLinux'
+          #     appName: 'filesearch-rag-ui'
+          #     package: '$(Build.ArtifactStagingDirectory)/FileSearchRAGWebUi'
             
