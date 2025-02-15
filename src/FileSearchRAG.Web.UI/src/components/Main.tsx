@@ -12,6 +12,9 @@ function Main() {
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
+  const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
+  const [loadingFile, setLoadingFile] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null); // Error state
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const url = "http://localhost:62000";
 
@@ -23,6 +26,7 @@ function Main() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoadingQuery(true);
     try {
       const apiResponse = await fetch(`${url}/query`, {
         method: "POST",
@@ -67,6 +71,8 @@ function Main() {
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);
+    } finally {
+      setLoadingQuery(false);
     }
   };
 
@@ -74,6 +80,8 @@ function Main() {
     e.preventDefault();
     if (!selectedFile) return;
 
+    setLoadingFile(true);
+    setUploadError(null); // Reset the error before starting the upload
     const formData = new FormData();
     formData.append("file", selectedFile);
 
@@ -86,9 +94,15 @@ function Main() {
       if (response.status === 200) {
         setLastUploadedFile(selectedFile.name);
         setSelectedFile(null);
+        setUploadError(null); // Clear any previous errors
+      } else {
+        throw new Error("Failed to upload file");
       }
     } catch (error) {
       console.error("Error uploading file:", error);
+      setUploadError("Failed to upload file. Please try again."); // Set error message
+    } finally {
+      setLoadingFile(false);
     }
   };
 
@@ -105,7 +119,7 @@ function Main() {
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg">
+          <div className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg max-h-[calc(100vh-300px)]">
             {conversation.map((entry, index) => (
               <div
                 key={index}
@@ -146,12 +160,14 @@ function Main() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your search query..."
             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={loadingQuery}
           />
           <button
             type="submit"
             className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300 mt-4"
+            disabled={loadingQuery}
           >
-            Submit
+            {loadingQuery ? "Loading..." : "Submit"}
           </button>
         </form>
       </div>
@@ -169,14 +185,22 @@ function Main() {
                   setSelectedFile(e.target.files ? e.target.files[0] : null)
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={loadingFile}
               />
               <button
                 type="submit"
                 className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 transition duration-300"
+                disabled={loadingFile}
               >
-                Upload
+                {loadingFile ? "Uploading..." : "Upload"}
               </button>
             </form>
+            {/* Display error message if upload fails */}
+            {uploadError && (
+              <div className="mt-4 text-red-500 font-semibold">
+                {uploadError}
+              </div>
+            )}
           </div>
 
           {lastUploadedFile && (
