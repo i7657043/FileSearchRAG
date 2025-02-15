@@ -1,9 +1,16 @@
 ﻿using FileSearchRAG.OpenAi;
 using OpenAI.Embeddings;
 using Pinecone;
+using System.Text;
 
 namespace FileSearchRAG.Pinecone
 {
+    public class VectorMatch
+    {
+        public List<string> Sources { get; set; } = new List<string>();
+        public string Context { get; set; } = string.Empty;
+    }
+
     public class PineconeClientWrapper
     {
         private readonly IndexClient _pineconeVectorStore;
@@ -18,7 +25,7 @@ namespace FileSearchRAG.Pinecone
             Console.WriteLine(indexStatsResponse.ToString());            
         }
 
-        public async Task<string> QueryAsync(float[] queryVectors, string customerId)
+        public async Task<VectorMatch> QueryAsync(float[] queryVectors, string customerId)
         {           
             QueryResponse response = await _pineconeVectorStore.QueryAsync(new QueryRequest()
             {
@@ -31,9 +38,22 @@ namespace FileSearchRAG.Pinecone
                 }
             });
 
-            string context = string.Join("\n", response.Matches?.Select(match => match.Metadata["text"])!);
+            VectorMatch vectorMatch = new VectorMatch();
+            StringBuilder sb = new StringBuilder();
+            foreach (var match in response.Matches?.Where(match => match.Score > 0.75)!)
+            {
+                if (match?.Metadata == null)
+                    continue;
 
-            return context;
+                string source = match.Metadata["source"].Value.ToString();
+                if (!vectorMatch.Sources.Any(matchSource => matchSource == source))
+                    vectorMatch.Sources.Add(source);
+
+                sb.Append($"{match.Metadata["text"].ToString()}\n");
+            }
+            vectorMatch.Context = sb.ToString();
+
+            return vectorMatch;
         }
 
         public async Task InsertVectors(List<Insert> inserts, string fileName, string customerId)

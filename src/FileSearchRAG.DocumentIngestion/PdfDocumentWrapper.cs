@@ -17,7 +17,7 @@ namespace FileSearchRAG.DocumentIngestion
         public List<string> Chunks { get; set; } = new List<string>();
     }
 
-    public class Documents
+    public class PdfDocumentWrapper
     {
         public DocumentIngestedResponse GetChunks(string path)
         {
