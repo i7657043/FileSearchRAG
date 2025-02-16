@@ -13,21 +13,24 @@ namespace FileSearchRAG.Web.API.Document.Providers
         private readonly ILogger<DocumentProvider> _logger;
         private readonly IOpenAiWrapper _openAiClient;
         private readonly IPineconeClientWrapper _pineconeClient;
-        private readonly PdfDocumentUploadWrapper _pdfDocumentUploadWrapper;
-        private readonly WordDocumentUploadWrapper _wordDocumentUploadWrapper;
+        private readonly PdfDocumentProcessor _pdfDocumentUploadWrapper;
+        private readonly WordDocumentProcessor _wordDocumentUploadWrapper;
+        private readonly TextDocumentProcessor _textDocumentUploadWrapper;
 
         public DocumentProvider(
             ILogger<DocumentProvider> logger, 
             IOpenAiWrapper openAiClient, 
             IPineconeClientWrapper pineconeClient, 
-            PdfDocumentUploadWrapper pdfDocumentUploadWrapper, 
-            WordDocumentUploadWrapper wordDocumentUploadWrapper)
+            PdfDocumentProcessor pdfDocumentUploadWrapper, 
+            WordDocumentProcessor wordDocumentUploadWrapper, 
+            TextDocumentProcessor textDocumentUploadWrapper)
         {
             _logger = logger;
             _openAiClient = openAiClient;
             _pineconeClient = pineconeClient;
             _pdfDocumentUploadWrapper = pdfDocumentUploadWrapper;
             _wordDocumentUploadWrapper = wordDocumentUploadWrapper;
+            _textDocumentUploadWrapper = textDocumentUploadWrapper;
         }
 
         public Task ClearAllAsync() =>
@@ -38,10 +41,15 @@ namespace FileSearchRAG.Web.API.Document.Providers
             List<string> chunks = new List<string>();
 
             string fileExtension = Path.GetExtension(fileInfo.FileName);
+
             if (fileExtension == ".pdf")
-                chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileBytes);
+                chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
             else if (fileExtension == ".doc" || fileExtension == ".docx")
                 chunks = _wordDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
+            else if (fileExtension == ".txt")
+                chunks = _textDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
+            else
+                throw new ArgumentException($"File type: {fileExtension} cannot be ingested");
 
             EmbeddingsResponse insertEmbeddings = await _openAiClient.GetEmbeddings(chunks);
 

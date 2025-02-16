@@ -16,8 +16,9 @@ internal class Program
         builder.Services.AddSingleton<IPineconeClientWrapper>(
             new PineconeClientWrapper(builder.Configuration.GetValue<string>("apiKeys:pinecone")!, 
             builder.Configuration.GetValue<string>("pinecone:index")!));
-        builder.Services.AddSingleton<PdfDocumentUploadWrapper>();
-        builder.Services.AddSingleton<WordDocumentUploadWrapper>();        
+        builder.Services.AddSingleton<PdfDocumentProcessor>();
+        builder.Services.AddSingleton<WordDocumentProcessor>(); 
+        builder.Services.AddSingleton<TextDocumentProcessor>();
         builder.Services.AddSingleton<IDocumentProvider, DocumentProvider>();
         builder.Services.AddSingleton<IRagQueryProvider, RagQueryProvider>();
 

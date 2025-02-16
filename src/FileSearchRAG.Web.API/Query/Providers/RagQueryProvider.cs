@@ -29,8 +29,8 @@ namespace FileSearchRAG.Web.API.Query.Providers
             string answer = await _openAiClient.QueryAsync(request.Query, request.SystemPrompt, responseContent.Context);
 
             string filesAnswer = responseContent.Sources.Count > 0
-                ? $"The answer came from: {string.Join(",", responseContent.Sources)}"
-                : "The answer came from knowledge outside of your private documents";
+                ? $"These documents contributed to the answer: {string.Join(",", responseContent.Sources)}"
+                : "Your private documents were not used to acquire this answer";
 
             return new RagQueryResponse(answer, filesAnswer);
         }

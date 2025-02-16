@@ -24,14 +24,11 @@ namespace FileSearchRAG.Web.API.Document.Document.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            byte[] fileBytes;
-
             MemoryStream stream = new MemoryStream();
             file.CopyTo(stream);
-            fileBytes = stream.ToArray();
+            stream.Seek(0, SeekOrigin.Begin);
 
-            // Pass chunkSize and chunkOverlap to the provider or processing logic
-            await _documentProvider.IngestAsync(new DocumentUpload(file.FileName, fileBytes, chunkSize, chunkOverlap, stream), customerId);
+            await _documentProvider.IngestAsync(new DocumentUpload(file.FileName, chunkSize, chunkOverlap, stream), customerId);
 
             return Ok();
         }

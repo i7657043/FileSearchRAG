@@ -80,7 +80,7 @@ namespace FileSearchRAG.Pinecone
                 });
             }
 
-            await _pineconeVectorStore.UpsertAsync(new UpsertRequest() 
+            UpsertResponse response = await _pineconeVectorStore.UpsertAsync(new UpsertRequest() 
             { 
                 Vectors = vectors, 
                 Namespace = _pinconeNamespace 

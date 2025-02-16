@@ -44,8 +44,15 @@ Use three sentence maximum and keep the answer concise.`
         }),
       });
 
-      const data = await apiResponse.json();
+      // Check for a successful response
+      if (!apiResponse.ok) {
+        throw new Error(`HTTP error! Status: ${apiResponse.status}`);
+      }
 
+      const data = await apiResponse.json();
+      console.log(data); // Log the data for debugging
+
+      // Add user input to the conversation
       setConversation((prevConversation) => [
         ...prevConversation,
         {
@@ -56,16 +63,30 @@ Use three sentence maximum and keep the answer concise.`
         },
         {
           type: "bot",
-          answer: "",
+          answer: "", // Placeholder for bot's answer
           filesAnswer: "",
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);
 
-      // Start typing effect with both answer and filesAnswer
-      startTypingEffect(data.answer, data.filesAnswer);
+      // Check if the response contains data before starting typing effect
+      if (data.answer && data.filesAnswer) {
+        startTypingEffect(data.answer, data.filesAnswer);
+      } else {
+        // If no answer is provided, display an error message
+        setConversation((prevConversation) => [
+          ...prevConversation,
+          {
+            type: "bot",
+            answer: "No response from the server. Please try again later.",
+            filesAnswer: "",
+            timestamp: new Date().toLocaleTimeString(),
+          },
+        ]);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Add the error message to the conversation history
       setConversation((prevConversation) => [
         ...prevConversation,
         {
@@ -145,7 +166,9 @@ Use three sentence maximum and keep the answer concise.`
               >
                 <p className="text-sm">
                   {entry.type === "bot" && index === conversation.length - 1
-                    ? typingAnswer
+                    ? !typingAnswer
+                      ? entry.answer
+                      : typingAnswer
                     : entry.answer}
                 </p>
                 {entry.type === "bot" && entry.filesAnswer && (

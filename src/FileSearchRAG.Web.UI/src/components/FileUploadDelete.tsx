@@ -21,6 +21,14 @@ function FileUploadDelete() {
   const [customerIdUpload, setCustomerIdUpload] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const clearMessage = (
+    setter: React.Dispatch<React.SetStateAction<string | null>>
+  ) => {
+    setTimeout(() => {
+      setter(null);
+    }, 3000);
+  };
+
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFile || !customerIdUpload) return;
@@ -48,6 +56,7 @@ function FileUploadDelete() {
         setUploadSuccessMessage(
           `File "${selectedFile.name}" uploaded successfully!`
         );
+        clearMessage(setUploadSuccessMessage); // Clear success message after 4 seconds
         if (fileInputRef.current) {
           fileInputRef.current.value = ""; // Clear the file input
         }
@@ -57,6 +66,7 @@ function FileUploadDelete() {
     } catch (error) {
       console.error("Error uploading file:", error);
       setUploadError("Failed to upload file. Please try again.");
+      clearMessage(setUploadError); // Clear error message after 4 seconds
     } finally {
       setLoadingFile(false);
     }
@@ -71,12 +81,14 @@ function FileUploadDelete() {
 
       if (response.status === 200) {
         setDeleteSuccessMessage("All documents deleted successfully.");
+        clearMessage(setDeleteSuccessMessage); // Clear success message after 4 seconds
       } else {
         throw new Error("Failed to delete documents");
       }
     } catch (error) {
       console.error("Error deleting documents:", error);
       setDeleteErrorMessage("Failed to delete documents. Please try again.");
+      clearMessage(setDeleteErrorMessage); // Clear error message after 4 seconds
     } finally {
       setLoadingDelete(false);
     }
@@ -97,7 +109,7 @@ function FileUploadDelete() {
             }
             className="p-2 border text-sm border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingFile}
-            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
+            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf,.txt,text/plain"
             ref={fileInputRef}
           />
           <div className="flex gap-4">

@@ -53,7 +53,7 @@ internal class Program
         else
         {
             Console.WriteLine("Chunking data...");
-            PdfDocumentWrapper documents = new PdfDocumentWrapper();
+            PdfDocumentBasicProcessor documents = new PdfDocumentBasicProcessor();
             DocumentIngestedResponse response = documents.GetChunks("Moray Council.pdf");
             Console.WriteLine(String.Join("\n", response.Chunks) + "\n");
 
