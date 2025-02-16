@@ -190,7 +190,7 @@ Use three sentence maximum and keep the answer concise.`
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your search query..."
-            className="w-full p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
+            className="w-full text-xs sm:text-base p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
           />
           <div className="text-xs pl-1">System prompt</div>
@@ -198,21 +198,21 @@ Use three sentence maximum and keep the answer concise.`
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter system prompt..."
-            className="w-full text-sm p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
+            className="w-full sm:text-sm text-xs p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
-            style={{ whiteSpace: "pre-wrap", height: "82px" }}
+            style={{ whiteSpace: "pre-wrap", height: "120px" }}
           />
           <input
             type="text"
             value={customerIdQuery}
             onChange={(e) => setCustomerIdQuery(e.target.value)}
             placeholder="Enter Customer ID for Query"
-            className="w-full p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
+            className="w-full text-xs sm:text-base p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
           />
           <button
             type="submit"
-            className={`w-full sm:w-1/3 bg-yellow-400 text-black p-2 rounded-lg transition duration-300 ${
+            className={`w-full sm:w-1/3 bg-yellow-400 text-black p-2 rounded-lg transition duration-300 text-sm sm:text-base ${
               loadingQuery || !customerIdQuery || !query || !systemPrompt
                 ? "cursor-not-allowed opacity-50"
                 : "hover:bg-yellow-500"

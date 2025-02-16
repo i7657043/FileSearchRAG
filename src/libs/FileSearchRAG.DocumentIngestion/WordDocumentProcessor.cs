@@ -6,9 +6,11 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
 namespace FileSearchRAG.DocumentIngestion
 {
-    public class WordDocumentProcessor
+    public class WordDocumentProcessor : IDocumentProcessor
     {
-        public List<string> GetChunks(Stream wordStream)
+        public DocumentType DocumentType { get => DocumentType.DOC; }
+
+        public List<string> GetChunks(Stream wordStream, int chunkSize, int chunkOverlap)
         {
             List<string> pages = new List<string>();
 
@@ -38,7 +40,7 @@ namespace FileSearchRAG.DocumentIngestion
                 }
             }
 
-            return TextChunker.SplitMarkdownParagraphs(pages, maxTokensPerParagraph: 150, overlapTokens: 15);
+            return TextChunker.SplitMarkdownParagraphs(pages, chunkSize, chunkOverlap);
         }
     }
 }

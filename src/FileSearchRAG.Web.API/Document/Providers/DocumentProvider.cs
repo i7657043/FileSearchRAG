@@ -2,35 +2,28 @@
 using FileSearchRAG.OpenAi;
 using FileSearchRAG.Pinecone;
 using FileSearchRAG.Web.API.Document.Models;
+using FileSearchRAG.Web.API.Extensions;
 using OpenAI.Embeddings;
-using Pinecone;
-using static FileSearchRAG.Web.API.Document.Providers.DocumentProvider;
 
 namespace FileSearchRAG.Web.API.Document.Providers
 {
-    public partial class DocumentProvider : IDocumentProvider
+    public class DocumentProvider : IDocumentProvider
     {
         private readonly ILogger<DocumentProvider> _logger;
         private readonly IOpenAiWrapper _openAiClient;
         private readonly IPineconeClientWrapper _pineconeClient;
-        private readonly PdfDocumentProcessor _pdfDocumentUploadWrapper;
-        private readonly WordDocumentProcessor _wordDocumentUploadWrapper;
-        private readonly TextDocumentProcessor _textDocumentUploadWrapper;
+        private readonly List<IDocumentProcessor> _docProcessors;
 
         public DocumentProvider(
-            ILogger<DocumentProvider> logger, 
-            IOpenAiWrapper openAiClient, 
-            IPineconeClientWrapper pineconeClient, 
-            PdfDocumentProcessor pdfDocumentUploadWrapper, 
-            WordDocumentProcessor wordDocumentUploadWrapper, 
-            TextDocumentProcessor textDocumentUploadWrapper)
+            ILogger<DocumentProvider> logger,
+            IOpenAiWrapper openAiClient,
+            IPineconeClientWrapper pineconeClient,
+            List<IDocumentProcessor> docProcessors)
         {
             _logger = logger;
             _openAiClient = openAiClient;
             _pineconeClient = pineconeClient;
-            _pdfDocumentUploadWrapper = pdfDocumentUploadWrapper;
-            _wordDocumentUploadWrapper = wordDocumentUploadWrapper;
-            _textDocumentUploadWrapper = textDocumentUploadWrapper;
+            _docProcessors = docProcessors;
         }
 
         public Task ClearAllAsync() =>
@@ -40,22 +33,26 @@ namespace FileSearchRAG.Web.API.Document.Providers
         {
             List<string> chunks = new List<string>();
 
-            string fileExtension = Path.GetExtension(fileInfo.FileName);
+            string fileExtension = Path.GetExtension(fileInfo.FileUpload.FileName);
+            MemoryStream stream = fileInfo.FileUpload.GetFileStream();
 
-            if (fileExtension == ".pdf")
-                chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
-            else if (fileExtension == ".doc" || fileExtension == ".docx")
-                chunks = _wordDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
-            else if (fileExtension == ".txt")
-                chunks = _textDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
-            else
-                throw new ArgumentException($"File type: {fileExtension} cannot be ingested");
+            chunks = _docProcessors.First(processor => processor.DocumentType == GetDocumentType(fileExtension))
+                .GetChunks(stream, fileInfo.ChunkSize, fileInfo.ChunkOverlap);
 
             EmbeddingsResponse insertEmbeddings = await _openAiClient.GetEmbeddings(chunks);
 
             List<Insert> inserts = _openAiClient.CreateInserts(chunks, insertEmbeddings);
 
-            await _pineconeClient.InsertVectors(inserts, fileInfo.FileName, customerId);
+            await _pineconeClient.InsertVectors(inserts, fileInfo.FileUpload.FileName, customerId);
         }
+
+        private DocumentType GetDocumentType(string fileExtension) =>
+            fileExtension.ToLower() switch
+            {
+                ".pdf" => DocumentType.PDF,
+                ".doc" or ".docx" => DocumentType.DOC,
+                ".txt" => DocumentType.TXT,
+                _ => throw new NotSupportedException($"Unsupported file type: {fileExtension}")
+            };
     }
 }

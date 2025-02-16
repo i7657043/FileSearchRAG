@@ -2,17 +2,15 @@
 {
     public class DocumentUpload
     {
-        public DocumentUpload(string fileName, int chunkSize, int chunkOverlap, Stream fileStream)
+        public DocumentUpload(IFormFile fileUpload, int chunkSize, int chunkOverlap)
         {
-            FileName = fileName;
             ChunkSize = chunkSize;
             ChunkOverlap = chunkOverlap;
-            FileStream = fileStream;
+            FileUpload = fileUpload;
         }
 
-        public string FileName { get; set; }
+        public IFormFile FileUpload { get; set; }
         public int ChunkSize { get; set; }
         public int ChunkOverlap { get; set; }
-        public Stream FileStream { get; set; }
     }
 }

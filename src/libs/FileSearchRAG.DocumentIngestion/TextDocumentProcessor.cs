@@ -3,9 +3,11 @@ using System.Text;
 
 namespace FileSearchRAG.DocumentIngestion
 {
-    public class TextDocumentProcessor
+    public class TextDocumentProcessor: IDocumentProcessor
     {
-        public List<string> GetChunks(Stream textStream)
+        public DocumentType DocumentType { get => DocumentType.TXT; }
+
+        public List<string> GetChunks(Stream textStream, int chunkSize, int chunkOverlap)
         {
             List<string> chunks = new List<string>();
 
@@ -13,7 +15,7 @@ namespace FileSearchRAG.DocumentIngestion
             {
                 string documentText = reader.ReadToEnd();
 
-                var paragraphs = TextChunker.SplitPlainTextParagraphs(new string [] { documentText }, 150, 15);
+                var paragraphs = TextChunker.SplitPlainTextParagraphs(new string [] { documentText }, chunkSize, chunkOverlap);
 
                 foreach (var paragraph in paragraphs)
                     chunks.Add(paragraph);

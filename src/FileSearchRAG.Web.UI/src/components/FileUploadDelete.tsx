@@ -107,14 +107,14 @@ function FileUploadDelete() {
             onChange={(e) =>
               setSelectedFile(e.target.files ? e.target.files[0] : null)
             }
-            className="p-2 border text-sm border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
+            className="sm:w-auto w-full p-2 border text-sm border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingFile}
             accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf,.txt,text/plain"
             ref={fileInputRef}
           />
-          <div className="flex gap-4">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full">
-              <label className="block  font-semibold text-yellow-400 mb-1">
+              <label className="block font-semibold text-yellow-400 mb-1 text-sm">
                 Customer Id
               </label>
               <input
@@ -127,7 +127,7 @@ function FileUploadDelete() {
               />
             </div>
             <div className="w-full">
-              <label className="block  font-semibold text-yellow-400 mb-1">
+              <label className="block font-semibold text-yellow-400 mb-1 text-sm">
                 Chunk Size
               </label>
               <input
@@ -138,7 +138,7 @@ function FileUploadDelete() {
               />
             </div>
             <div className="w-full">
-              <label className="block  font-semibold text-yellow-400 mb-1">
+              <label className="block font-semibold text-yellow-400 mb-1 text-sm">
                 Chunk Overlap
               </label>
               <input

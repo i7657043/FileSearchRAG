@@ -5,13 +5,15 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 
 namespace FileSearchRAG.DocumentIngestion
 {
-    public class PdfDocumentProcessor
+    public class PdfDocumentProcessor : IDocumentProcessor
     {
-        public List<string> GetChunks(Stream fileStream)
+        public DocumentType DocumentType { get => DocumentType.PDF; }
+
+        public List<string> GetChunks(Stream fileStream, int chunkSize, int chunkOverlap)
         {
             List<string> pages = GetPdfLines(fileStream);
 
-            return TextChunker.SplitMarkdownParagraphs(pages, maxTokensPerParagraph: 150, overlapTokens: 15);
+            return TextChunker.SplitMarkdownParagraphs(pages, chunkSize, chunkOverlap);
         }
 
         private List<string> GetPdfLines(Stream fileStream)

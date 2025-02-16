@@ -19,16 +19,17 @@ namespace FileSearchRAG.Web.API.Document.Document.Controllers
 
         [HttpPost]
         [Route("")]
-        public async Task<IActionResult> IngestAsync(IFormFile file, [FromForm] int chunkSize, [FromForm] int chunkOverlap, [FromForm] string customerId)
+        public async Task<IActionResult> IngestAsync(IFormFile file, [FromForm] string chunkSize, [FromForm] string chunkOverlap, [FromForm] string customerId)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            MemoryStream stream = new MemoryStream();
-            file.CopyTo(stream);
-            stream.Seek(0, SeekOrigin.Begin);
+            int ingestChunkSize, ingestChunkOverap;
 
-            await _documentProvider.IngestAsync(new DocumentUpload(file.FileName, chunkSize, chunkOverlap, stream), customerId);
+            if (!int.TryParse(chunkSize, out ingestChunkSize) || !int.TryParse(chunkOverlap, out ingestChunkOverap))
+                return BadRequest("Chunk size and Chunk overlap must be whole numbers.");            
+
+            await _documentProvider.IngestAsync(new DocumentUpload(file, ingestChunkSize, ingestChunkOverap), customerId);
 
             return Ok();
         }
