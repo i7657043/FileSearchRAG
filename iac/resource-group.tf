@@ -1,4 +1,4 @@
 resource "azurerm_resource_group" "this" {
-  name     = "filesearch-rag-rg"
+  name     = "filesearch-rag-rgone"
   location = "UK South"
 }

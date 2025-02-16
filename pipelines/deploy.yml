@@ -13,7 +13,7 @@ stages:
       - name: imageName
         value: 'filesearch-rag-ui-img'
       - name: webApiAppName
-        value: 'filesearch-rag-api-$(Build.BuildId)'
+        value: 'filesearch-rag-rest-webapi'
     jobs:
       - job: build
         displayName: Build and Publish
