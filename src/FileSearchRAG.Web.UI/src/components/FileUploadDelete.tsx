@@ -2,8 +2,7 @@ import React, { useState, useRef } from "react";
 
 function FileUploadDelete() {
   const url = process.env.REACT_APP_API_BASE_URL ?? "";
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [loadingFile, setLoadingFile] = useState<boolean>(false);
   const [loadingDelete, setLoadingDelete] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -18,7 +17,7 @@ function FileUploadDelete() {
   const [deleteErrorMessage, setDeleteErrorMessage] = useState<string | null>(
     null
   );
-  const [customerIdUpload, setCustomerIdUpload] = useState<string>("");
+  const [customerId, setCustomerIdUpload] = useState<string>("001");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const clearMessage = (
@@ -31,41 +30,52 @@ function FileUploadDelete() {
 
   const handleFileUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFile || !customerIdUpload) return;
+    if (!selectedFiles.length || !customerId) return;
 
     setLoadingFile(true);
     setUploadError(null);
     setUploadSuccessMessage(null);
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("chunkSize", chunkSize);
-    formData.append("chunkOverlap", chunkOverlap);
-    formData.append("customerId", customerIdUpload);
-
     try {
-      const response = await fetch(`${url}/document`, {
-        method: "POST",
-        body: formData,
-      });
+      for (const file of selectedFiles) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("chunkSize", chunkSize);
+        formData.append("chunkOverlap", chunkOverlap);
+        formData.append("customerId", customerId);
 
-      if (response.status === 200) {
-        setLastUploadedFile(selectedFile.name);
-        setSelectedFile(null);
-        setUploadError(null);
-        setUploadSuccessMessage(
-          `File "${selectedFile.name}" uploaded successfully!`
-        );
-        clearMessage(setUploadSuccessMessage); // Clear success message after 4 seconds
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""; // Clear the file input
+        const response = await fetch(`${url}/document`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.status !== 200) {
+          throw new Error("Failed to upload file");
         }
-      } else {
-        throw new Error("Failed to upload file");
+      }
+
+      // Construct success message
+      const firstTwoFiles = selectedFiles
+        .slice(0, 2)
+        .map((file) => file.name)
+        .join(", ");
+      const totalFiles = selectedFiles.length;
+      const successMessage =
+        totalFiles <= 2
+          ? `Files "${firstTwoFiles}" uploaded successfully!`
+          : `Files "${firstTwoFiles}" and ${
+              totalFiles - 2
+            } more uploaded successfully!`;
+
+      setUploadSuccessMessage(successMessage);
+      clearMessage(setUploadSuccessMessage); // Clear success message after 4 seconds
+      setSelectedFiles([]); // Clear selected files
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Clear the file input
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      setUploadError("Failed to upload file. Please try again.");
+      console.error("Error uploading files:", error);
+      setUploadError("Failed to upload files. Please try again.");
       clearMessage(setUploadError); // Clear error message after 4 seconds
     } finally {
       setLoadingFile(false);
@@ -105,12 +115,13 @@ function FileUploadDelete() {
           <input
             type="file"
             onChange={(e) =>
-              setSelectedFile(e.target.files ? e.target.files[0] : null)
+              setSelectedFiles(e.target.files ? Array.from(e.target.files) : [])
             }
             className="sm:w-auto w-full p-2 border text-sm border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingFile}
             accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf,.txt,text/plain"
             ref={fileInputRef}
+            multiple
           />
           <div className="flex flex-col md:flex-row gap-4">
             <div className="w-full">
@@ -119,7 +130,7 @@ function FileUploadDelete() {
               </label>
               <input
                 type="text"
-                value={customerIdUpload}
+                value={customerId}
                 onChange={(e) => setCustomerIdUpload(e.target.value)}
                 placeholder="Enter Customer ID for Upload"
                 className="w-full p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
@@ -153,8 +164,8 @@ function FileUploadDelete() {
             type="submit"
             className={`w-full sm:w-1/3 bg-yellow-400 text-black p-2 rounded-lg transition duration-300  ${
               loadingFile ||
-              !selectedFile ||
-              !customerIdUpload ||
+              !selectedFiles.length ||
+              !customerId ||
               !chunkSize ||
               !chunkOverlap
                 ? "cursor-not-allowed opacity-50"
@@ -162,8 +173,8 @@ function FileUploadDelete() {
             }`}
             disabled={
               loadingFile ||
-              !selectedFile ||
-              !customerIdUpload ||
+              !selectedFiles.length ||
+              !customerId ||
               !chunkSize ||
               !chunkOverlap
             }
@@ -205,15 +216,14 @@ function FileUploadDelete() {
         )}
       </div>
 
-      {/* Header */}
       <div className="h-full bg-gray-900 py-2 px-2 rounded-lg shadow-lg mt-5 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-yellow-400">
             File Search with RAG
           </h1>
           <p className="text-gray-400 mt-2">
-            Ingest some documents, then ask something about the information
-            contained within them
+            Ingest one or more documents, then query the information contained
+            within them
           </p>
         </div>
       </div>

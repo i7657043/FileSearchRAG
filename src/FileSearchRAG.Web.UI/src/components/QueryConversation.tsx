@@ -16,8 +16,7 @@ If you don't know the answer, say you don't know.
 Use three sentence maximum and keep the answer concise.`
   );
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
-  const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
-  const [customerIdQuery, setCustomerIdQuery] = useState<string>("");
+  const [customerIdQuery, setCustomerId] = useState<string>("001");
   const [typingAnswer, setTypingAnswer] = useState<string>("");
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +28,26 @@ Use three sentence maximum and keep the answer concise.`
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoadingQuery(true);
+
+    // Clear typingAnswer when a new query is submitted
+    setTypingAnswer("");
+
+    // Add user input to the conversation immediately
+    setConversation((prevConversation) => [
+      ...prevConversation,
+      {
+        type: "user",
+        answer: query,
+        filesAnswer: "",
+        timestamp: new Date().toLocaleTimeString(),
+      },
+      {
+        type: "bot",
+        answer: "Loading...", // Placeholder for bot's answer
+        filesAnswer: "",
+        timestamp: new Date().toLocaleTimeString(),
+      },
+    ]);
 
     try {
       const apiResponse = await fetch(`${url}/query`, {
@@ -52,63 +70,40 @@ Use three sentence maximum and keep the answer concise.`
       const data = await apiResponse.json();
       console.log(data); // Log the data for debugging
 
-      // Add user input to the conversation
-      setConversation((prevConversation) => [
-        ...prevConversation,
-        {
-          type: "user",
-          answer: query,
-          filesAnswer: "",
-          timestamp: new Date().toLocaleTimeString(),
-        },
-        {
-          type: "bot",
-          answer: "", // Placeholder for bot's answer
-          filesAnswer: "",
-          timestamp: new Date().toLocaleTimeString(),
-        },
-      ]);
-
       // Check if the response contains data before starting typing effect
       if (data.answer && data.filesAnswer) {
         startTypingEffect(data.answer, data.filesAnswer);
       } else {
         // If no answer is provided, display an error message
-        setConversation((prevConversation) => [
-          ...prevConversation,
-          {
-            type: "bot",
-            answer: "No response from the server. Please try again later.",
-            filesAnswer: "",
-            timestamp: new Date().toLocaleTimeString(),
-          },
-        ]);
+        setConversation((prevConversation) =>
+          prevConversation.map((entry, i) =>
+            i === prevConversation.length - 1
+              ? {
+                  ...entry,
+                  answer:
+                    "No response from the server. Please try again later.",
+                }
+              : entry
+          )
+        );
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      // Add the error message to the conversation history
-      setConversation((prevConversation) => [
-        ...prevConversation,
-        {
-          type: "user",
-          answer: query,
-          filesAnswer: "",
-          timestamp: new Date().toLocaleTimeString(),
-        },
-        {
-          type: "bot",
-          answer: "Failed to fetch response. Please try again.",
-          filesAnswer: "",
-          timestamp: new Date().toLocaleTimeString(),
-        },
-      ]);
-    } finally {
-      setLoadingQuery(false);
+      // Update the bot's response with an error message
+      setConversation((prevConversation) =>
+        prevConversation.map((entry, i) =>
+          i === prevConversation.length - 1
+            ? {
+                ...entry,
+                answer: "Failed to fetch response. Please try again.",
+              }
+            : entry
+        )
+      );
     }
   };
 
   const startTypingEffect = (fullText: string, filesAnswer: string) => {
-    setTypingAnswer("");
     let currentText = "";
 
     fullText.split("").forEach((char, index) => {
@@ -125,6 +120,7 @@ Use three sentence maximum and keep the answer concise.`
                 : entry
             )
           );
+          setTypingAnswer(""); // Clear typingAnswer after the typing effect is complete
         }
       }, index * 20);
     });
@@ -155,9 +151,7 @@ Use three sentence maximum and keep the answer concise.`
               >
                 <p className="text-sm">
                   {entry.type === "bot" && index === conversation.length - 1
-                    ? !typingAnswer
-                      ? entry.answer
-                      : typingAnswer
+                    ? typingAnswer || entry.answer // Show typingAnswer if it exists, otherwise show the answer
                     : entry.answer}
                 </p>
                 {entry.type === "bot" && entry.filesAnswer && (
@@ -191,7 +185,6 @@ Use three sentence maximum and keep the answer concise.`
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your search query..."
             className="w-full text-xs sm:text-base p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
-            disabled={loadingQuery}
           />
           <div className="text-xs pl-1">System prompt</div>
           <textarea
@@ -199,29 +192,25 @@ Use three sentence maximum and keep the answer concise.`
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter system prompt..."
             className="w-full sm:text-sm text-xs p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
-            disabled={loadingQuery}
             style={{ whiteSpace: "pre-wrap", height: "120px" }}
           />
           <input
             type="text"
             value={customerIdQuery}
-            onChange={(e) => setCustomerIdQuery(e.target.value)}
+            onChange={(e) => setCustomerId(e.target.value)}
             placeholder="Enter Customer ID for Query"
             className="w-full text-xs sm:text-base p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
-            disabled={loadingQuery}
           />
           <button
             type="submit"
             className={`w-full sm:w-1/3 bg-yellow-400 text-black p-2 rounded-lg transition duration-300 text-sm sm:text-base ${
-              loadingQuery || !customerIdQuery || !query || !systemPrompt
+              !customerIdQuery || !query || !systemPrompt
                 ? "cursor-not-allowed opacity-50"
                 : "hover:bg-yellow-500"
             }`}
-            disabled={
-              loadingQuery || !customerIdQuery || !query || !systemPrompt
-            }
+            disabled={!customerIdQuery || !query || !systemPrompt}
           >
-            {loadingQuery ? "Getting Answer..." : "Submit Query"}
+            Submit Query
           </button>
         </div>
       </form>

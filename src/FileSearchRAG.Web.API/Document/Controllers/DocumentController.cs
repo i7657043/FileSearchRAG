@@ -24,9 +24,7 @@ namespace FileSearchRAG.Web.API.Document.Document.Controllers
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
 
-            int ingestChunkSize, ingestChunkOverap;
-
-            if (!int.TryParse(chunkSize, out ingestChunkSize) || !int.TryParse(chunkOverlap, out ingestChunkOverap))
+            if (!int.TryParse(chunkSize, out int ingestChunkSize) || !int.TryParse(chunkOverlap, out int ingestChunkOverap))
                 return BadRequest("Chunk size and Chunk overlap must be whole numbers.");            
 
             await _documentProvider.IngestAsync(new DocumentUpload(file, ingestChunkSize, ingestChunkOverap), customerId);
