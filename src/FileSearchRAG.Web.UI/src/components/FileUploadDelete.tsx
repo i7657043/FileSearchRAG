@@ -128,7 +128,7 @@ function FileUploadDelete() {
             </div>
             <div className="w-full">
               <label className="block  font-semibold text-yellow-400 mb-1">
-                Chunk Size (bytes)
+                Chunk Size
               </label>
               <input
                 type="text"
@@ -139,7 +139,7 @@ function FileUploadDelete() {
             </div>
             <div className="w-full">
               <label className="block  font-semibold text-yellow-400 mb-1">
-                Chunk Overlap (bytes)
+                Chunk Overlap
               </label>
               <input
                 type="text"
@@ -184,7 +184,6 @@ function FileUploadDelete() {
       </div>
 
       <div className="bg-gray-900 p-4 rounded-lg shadow-lg mt-5">
-        <h2 className="text-2xl font-bold text-yellow-400 mb-4">Delete All</h2>
         <button
           onClick={handleDeleteAll}
           className={`w-full sm:w-1/3 bg-red-500 text-white p-2 rounded-lg transition duration-300  ${
@@ -204,6 +203,19 @@ function FileUploadDelete() {
             {deleteErrorMessage}
           </div>
         )}
+      </div>
+
+      {/* Header */}
+      <div className="h-full bg-gray-900 py-2 px-2 rounded-lg shadow-lg mt-5 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-yellow-400">
+            File Search with RAG
+          </h1>
+          <p className="text-gray-400 mt-2">
+            Ingest some documents, then ask something about the information
+            contained within them
+          </p>
+        </div>
       </div>
     </div>
   );
