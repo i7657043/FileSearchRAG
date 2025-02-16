@@ -1,9 +1,17 @@
 import React from "react";
 import "./App.css";
-import Main from "./components/Main";
+import FileUploadDelete from "./components/FileUploadDelete";
+import QueryConversation from "./components/QueryConversation";
 
 function App() {
-  return <Main />;
+  return (
+    <div className="min-h-screen bg-gray-900 ">
+      <div className="flex flex-col md:flex-row">
+        <QueryConversation />
+        <FileUploadDelete />
+      </div>
+    </div>
+  );
 }
 
 export default App;

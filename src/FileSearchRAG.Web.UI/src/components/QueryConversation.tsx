@@ -10,24 +10,27 @@ interface ConversationEntry {
 function QueryConversation() {
   const url = process.env.REACT_APP_API_BASE_URL ?? "";
   const [query, setQuery] = useState<string>("");
-  const [systemPrompt, setSystemPrompt] =
-    useState<string>(`Use the given context to answer the question
+  const [systemPrompt, setSystemPrompt] = useState<string>(
+    `Use the given context to answer the question
 If you don't know the answer, say you don't know.
-Use three sentence maximum and keep the answer concise.`);
+Use three sentence maximum and keep the answer concise.`
+  );
   const [conversation, setConversation] = useState<ConversationEntry[]>([]);
   const [loadingQuery, setLoadingQuery] = useState<boolean>(false);
   const [customerIdQuery, setCustomerIdQuery] = useState<string>("");
+  const [typingAnswer, setTypingAnswer] = useState<string>("");
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (conversationEndRef.current) {
       conversationEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [conversation]);
+  }, [conversation, typingAnswer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoadingQuery(true);
+
     try {
       const apiResponse = await fetch(`${url}/query`, {
         method: "POST",
@@ -48,16 +51,19 @@ Use three sentence maximum and keep the answer concise.`);
         {
           type: "user",
           answer: query,
-          filesAnswer: data.filesAnswer,
+          filesAnswer: "",
           timestamp: new Date().toLocaleTimeString(),
         },
         {
           type: "bot",
-          answer: data.answer,
+          answer: "",
           filesAnswer: "",
           timestamp: new Date().toLocaleTimeString(),
         },
       ]);
+
+      // Start typing effect with both answer and filesAnswer
+      startTypingEffect(data.answer, data.filesAnswer);
     } catch (error) {
       console.error("Error fetching data:", error);
       setConversation((prevConversation) => [
@@ -80,57 +86,91 @@ Use three sentence maximum and keep the answer concise.`);
     }
   };
 
+  const startTypingEffect = (fullText: string, filesAnswer: string) => {
+    setTypingAnswer("");
+    let currentText = "";
+
+    fullText.split("").forEach((char, index) => {
+      setTimeout(() => {
+        currentText += char;
+        setTypingAnswer(currentText);
+
+        // Once typing is done, update the conversation state
+        if (index === fullText.length - 1) {
+          setConversation((prevConversation) =>
+            prevConversation.map((entry, i) =>
+              i === prevConversation.length - 1
+                ? { ...entry, answer: fullText, filesAnswer }
+                : entry
+            )
+          );
+        }
+      }, index * 20);
+    });
+  };
+
   return (
-    <div className="w-full md:w-1/2 flex flex-col gap-4">
-      <div className="bg-white p-6 rounded-lg shadow-lg flex-1 flex flex-col">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-800">
+    <div className="w-full md:w-1/2 h-screen flex flex-col bg-black text-white p-4 rounded-lg">
+      {/* Header */}
+      <div className="bg-gray-900 py-2 px-2 rounded-lg shadow-lg">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-yellow-400">
             File Search with RAG
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-400 mt-2 ">
             Ask me something about the private files you upload
           </p>
         </div>
-
-        <div
-          className="flex-1 overflow-y-auto mb-4 p-4 bg-gray-50 rounded-lg"
-          style={{ maxHeight: "calc(100vh - 400px)" }}
-        >
-          <div className="space-y-4">
-            {conversation.map((entry, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  entry.type === "user" ? "justify-end" : "justify-start"
-                }`}
-              >
-                <div
-                  className={`max-w-2/3 p-3 rounded-lg ${
-                    entry.type === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  <p className="text-sm">{entry.answer}</p>
-                  <p className="text-sm pt-1">{entry.filesAnswer}</p>
-                  <p
-                    className={`text-xs mt-2 ${
-                      entry.type === "user" ? "text-gray-100" : "text-gray-700"
-                    }`}
-                  >
-                    {entry.timestamp}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div ref={conversationEndRef} />
-        </div>
       </div>
 
+      {/* Conversation Box */}
+      <div
+        className="flex-1 overflow-y-auto my-4 bg-gray-800 rounded-lg p-4"
+        style={{ minHeight: "250px" }}
+      >
+        <div className="space-y-4">
+          {conversation.map((entry, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                entry.type === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-2/3 p-3 rounded-lg ${
+                  entry.type === "user"
+                    ? "bg-yellow-400 text-black"
+                    : "bg-gray-700 text-white"
+                }`}
+              >
+                <p className="text-sm">
+                  {entry.type === "bot" && index === conversation.length - 1
+                    ? typingAnswer
+                    : entry.answer}
+                </p>
+                {entry.type === "bot" && entry.filesAnswer && (
+                  <p className="text-sm pt-1 text-gray-400">
+                    {entry.filesAnswer}
+                  </p>
+                )}
+                <p
+                  className={`text-xs mt-2 ${
+                    entry.type === "user" ? "text-gray-800" : "text-gray-300"
+                  }`}
+                >
+                  {entry.timestamp}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div ref={conversationEndRef} />
+      </div>
+
+      {/* Form */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-lg"
+        className="bg-gray-900 p-4 rounded-lg shadow-lg"
       >
         <div className="space-y-4">
           <input
@@ -138,37 +178,38 @@ Use three sentence maximum and keep the answer concise.`);
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Enter your search query..."
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
           />
+          <div className="text-xs pl-1">System prompt</div>
           <textarea
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             placeholder="Enter system prompt..."
-            className="w-full p-3 h-32 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full text-sm p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
-            style={{ whiteSpace: "pre-wrap" }}
+            style={{ whiteSpace: "pre-wrap", height: "82px" }}
           />
           <input
             type="text"
             value={customerIdQuery}
             onChange={(e) => setCustomerIdQuery(e.target.value)}
             placeholder="Enter Customer ID for Query"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-2 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingQuery}
           />
           <button
             type="submit"
-            className={`w-full sm:w-1/3 bg-blue-500 text-white p-3 rounded-lg transition duration-300 ${
+            className={`w-full sm:w-1/3 bg-yellow-400 text-black p-2 rounded-lg transition duration-300 ${
               loadingQuery || !customerIdQuery || !query || !systemPrompt
                 ? "cursor-not-allowed opacity-50"
-                : "hover:bg-blue-600"
+                : "hover:bg-yellow-500"
             }`}
             disabled={
               loadingQuery || !customerIdQuery || !query || !systemPrompt
             }
           >
-            {loadingQuery ? "Loading..." : "Submit"}
+            {loadingQuery ? "Getting Answer..." : "Submit Query"}
           </button>
         </div>
       </form>
