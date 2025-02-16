@@ -97,7 +97,7 @@ function FileUploadDelete() {
             }
             className="p-2 border text-sm border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-800 text-white "
             disabled={loadingFile}
-            accept="application/pdf"
+            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,application/pdf"
             ref={fileInputRef}
           />
           <div className="flex gap-4">

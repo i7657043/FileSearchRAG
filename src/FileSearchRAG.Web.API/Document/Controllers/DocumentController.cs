@@ -23,17 +23,15 @@ namespace FileSearchRAG.Web.API.Document.Document.Controllers
         {
             if (file == null || file.Length == 0)
                 return BadRequest("No file uploaded.");
-            if (file.ContentType != "application/pdf")
-                return BadRequest("Only PDF files are supported.");
 
             byte[] fileBytes;
 
-            using var stream = new MemoryStream();
+            MemoryStream stream = new MemoryStream();
             file.CopyTo(stream);
             fileBytes = stream.ToArray();
 
             // Pass chunkSize and chunkOverlap to the provider or processing logic
-            await _documentProvider.IngestAsync(new DocumentUpload(file.FileName, fileBytes, chunkSize, chunkOverlap), customerId);
+            await _documentProvider.IngestAsync(new DocumentUpload(file.FileName, fileBytes, chunkSize, chunkOverlap, stream), customerId);
 
             return Ok();
         }

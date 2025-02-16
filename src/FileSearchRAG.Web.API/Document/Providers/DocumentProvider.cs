@@ -14,13 +14,20 @@ namespace FileSearchRAG.Web.API.Document.Providers
         private readonly IOpenAiWrapper _openAiClient;
         private readonly IPineconeClientWrapper _pineconeClient;
         private readonly PdfDocumentUploadWrapper _pdfDocumentUploadWrapper;
+        private readonly WordDocumentUploadWrapper _wordDocumentUploadWrapper;
 
-        public DocumentProvider(ILogger<DocumentProvider> logger, IOpenAiWrapper openAiClient, IPineconeClientWrapper pineconeClient, PdfDocumentUploadWrapper pdfDocumentUploadWrapper)
+        public DocumentProvider(
+            ILogger<DocumentProvider> logger, 
+            IOpenAiWrapper openAiClient, 
+            IPineconeClientWrapper pineconeClient, 
+            PdfDocumentUploadWrapper pdfDocumentUploadWrapper, 
+            WordDocumentUploadWrapper wordDocumentUploadWrapper)
         {
             _logger = logger;
             _openAiClient = openAiClient;
             _pineconeClient = pineconeClient;
             _pdfDocumentUploadWrapper = pdfDocumentUploadWrapper;
+            _wordDocumentUploadWrapper = wordDocumentUploadWrapper;
         }
 
         public Task ClearAllAsync() =>
@@ -28,7 +35,13 @@ namespace FileSearchRAG.Web.API.Document.Providers
 
         public async Task IngestAsync(DocumentUpload fileInfo, string customerId)
         {
-            List<string> chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileBytes);
+            List<string> chunks = new List<string>();
+
+            string fileExtension = Path.GetExtension(fileInfo.FileName);
+            if (fileExtension == ".pdf")
+                chunks = _pdfDocumentUploadWrapper.GetChunks(fileInfo.FileBytes);
+            else if (fileExtension == ".doc" || fileExtension == ".docx")
+                chunks = _wordDocumentUploadWrapper.GetChunks(fileInfo.FileStream);
 
             EmbeddingsResponse insertEmbeddings = await _openAiClient.GetEmbeddings(chunks);
 

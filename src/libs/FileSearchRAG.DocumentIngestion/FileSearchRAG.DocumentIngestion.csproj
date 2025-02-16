@@ -13,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.37.0" />
     <PackageReference Include="PdfPig" Version="0.1.9" />
+    <PackageReference Include="Spire.Doc" Version="13.1.4" />
   </ItemGroup>
 
   <ItemGroup>
